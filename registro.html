@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Registro de Objeto</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h2>Registro de nuevo objeto</h2>
+    <form id="form-registro" class="grid-form">
+        <div class="col">
+            <input type="text" id="modelo" placeholder="Modelo" required>
+            <input type="text" id="noParte" placeholder="No. de Parte" required>
+            <input type="text" id="nombre" placeholder="Nombre" required>
+        </div>
+        <div class="col">
+            <input type="number" id="cantidad" placeholder="Cantidad" required>
+            <input type="number" id="costo" placeholder="Costo" required>
+            <select id="consumible"><option>Consumible</option><option>No Consumible</option></select>
+        </div>
+        <div class="col">
+            <input type="text" id="ubicacion" placeholder="Área/Laboratorio" required>
+            <input type="text" id="estante" placeholder="Estante">
+        </div>
+        <div class="form-buttons">
+            <button type="submit" class="btn-action">Registrar</button>
+            <button type="button" onclick="location.href='index.html'">Ir a Página Principal</button>
+        </div>
+    </form>
+
+    <script type="module">
+        import { db, checkAuth } from './config.js';
+        import { collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        
+        checkAuth();
+
+        document.getElementById('form-registro').onsubmit = async (e) => {
+            e.preventDefault();
+            await addDoc(collection(db, "productos"), {
+                modelo: document.getElementById('modelo').value,
+                noParte: document.getElementById('noParte').value,
+                nombre: document.getElementById('nombre').value,
+                cantidad: Number(document.getElementById('cantidad').value),
+                costo: Number(document.getElementById('costo').value),
+                consumible: document.getElementById('consumible').value,
+                ubicacion: document.getElementById('ubicacion').value,
+                usuarioRegistró: sessionStorage.getItem("currentUser")
+            });
+            alert("Registrado");
+            e.target.reset();
+        };
+    </script>
+</body>
+</html>

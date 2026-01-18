@@ -2,93 +2,44 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Control - Historial de Búsquedas</title>
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
-    
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1a202c; color: #e2e8f0; margin: 0; padding: 20px; }
-        .container { max-width: 900px; margin: auto; background: #2d3748; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
-        h1 { text-align: center; color: #63b3ed; border-bottom: 2px solid #4a5568; padding-bottom: 10px; }
-        .stats { display: flex; justify-content: space-around; margin-bottom: 20px; text-align: center; }
-        .stat-box { background: #4a5568; padding: 15px; border-radius: 8px; min-width: 150px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #f7fafc; color: #2d3748; border-radius: 8px; overflow: hidden; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #edf2f7; }
-        th { background: #edf2f7; color: #4a5568; text-transform: uppercase; font-size: 12px; }
-        .encontrado { color: #38a169; font-weight: bold; }
-        .no-encontrado { color: #e53e3e; font-weight: bold; }
-    </style>
+    <title>Dashboard - Inventario</title>
+    <link rel="stylesheet" href="style.css">
 </head>
-<body>
-
-<div class="container">
-    <h1>Historial de Consultas 2026</h1>
-    
-    <div class="stats">
-        <div class="stat-box">
-            <div style="font-size: 0.8em; color: #a0aec0;">Total Búsquedas</div>
-            <div id="totalConsultas" style="font-size: 1.5em; font-weight: bold;">0</div>
-        </div>
+<body class="bg-blue">
+    <header><h1>Página Principal</h1></header>
+    <div class="main-container">
+        <nav class="side-menu">
+            <button onclick="location.href='registro.html'">Registrar</button>
+            <button onclick="location.href='actualizar.html'">Actualizar</button>
+            <button onclick="location.href='eliminar.html'">Eliminar</button>
+            <button id="nav-admin" onclick="location.href='usuarios.html'" style="display:none; background:#f1c40f;">Administrar Usuarios</button>
+        </nav>
+        <section class="content">
+            <table>
+                <thead>
+                    <tr><th>Modelo</th><th>Nombre</th><th>Cantidad</th><th>Ubicación</th></tr>
+                </thead>
+                <tbody id="inventory-body"></tbody>
+            </table>
+        </section>
     </div>
+    <button class="btn-exit" onclick="sessionStorage.clear(); location.href='login.html'">Salir</button>
 
-    <table id="tablaConsultas">
-        <thead>
-            <tr>
-                <th>Fecha y Hora</th>
-                <th>Código Buscado</th>
-                <th>Estado en Excel</th>
-            </tr>
-        </thead>
-        <tbody id="cuerpoTabla">
-            </tbody>
-    </table>
-</div>
+    <script type="module">
+        import { db, checkAuth } from './config.js';
+        import { collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-<script>
-    // Configuración con tus claves
-    const firebaseConfig = {
-        apiKey: "AIzaSyCtIagFFJBFRjvg5usXTm575YqOeeDE1G0",
-        authDomain: "mi-inventario-51f82.firebaseapp.com",
-        projectId: "mi-inventario-51f82",
-        databaseURL: "https://mi-inventario-51f82-default-rtdb.firebaseio.com", // URL de tu base de datos
-        storageBucket: "mi-inventario-51f82.firebasestorage.app",
-        messagingSenderId: "79417755416",
-        appId: "1:79417755416:web:e1bbab46cda2bdbb5da56d"
-    };
+        const user = checkAuth();
+        if(user === 'admin') document.getElementById('nav-admin').style.display = 'block';
 
-    // Inicializar Firebase
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database().ref('consultas');
-
-    // Escuchar la base de datos en tiempo real
-    db.orderByChild('timestamp').on('value', (snapshot) => {
-        const cuerpo = document.getElementById('cuerpoTabla');
-        const contador = document.getElementById('totalConsultas');
-        cuerpo.innerHTML = ""; 
-        
-        let total = 0;
-
-        snapshot.forEach((childSnapshot) => {
-            const data = childSnapshot.val();
-            total++;
-            
-            const claseEstado = data.estado === "Encontrado" ? "encontrado" : "no-encontrado";
-            
-            const fila = `
-                <tr>
-                    <td>${data.fecha}</td>
-                    <td style="font-family: monospace; font-weight: bold;">${data.codigo}</td>
-                    <td class="${claseEstado}">${data.estado}</td>
-                </tr>
-            `;
-            // Insertar arriba para ver lo más reciente primero
-            cuerpo.insertAdjacentHTML('afterbegin', fila);
+        onSnapshot(collection(db, "productos"), (snap) => {
+            const tbody = document.getElementById('inventory-body');
+            tbody.innerHTML = '';
+            snap.forEach(doc => {
+                const p = doc.data();
+                tbody.innerHTML += `<tr><td>${p.modelo}</td><td>${p.nombre}</td><td>${p.cantidad}</td><td>${p.ubicacion}</td></tr>`;
+            });
         });
-
-        contador.innerText = total;
-    });
-</script>
-
+    </script>
 </body>
 </html>

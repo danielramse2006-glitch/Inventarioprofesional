@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión de Usuarios</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h2>Crear Nuevo Perfil de Usuario</h2>
+    <div class="grid-form" style="grid-template-columns: 1fr; width: 400px; margin: auto;">
+        <input type="text" id="new-user" placeholder="Nombre de Usuario">
+        <input type="password" id="new-pass" placeholder="Asignar Contraseña">
+        <button id="btnCreateUser" class="btn-action">Guardar Usuario</button>
+        <button onclick="location.href='index.html'">Volver</button>
+    </div>
+
+    <script type="module">
+        import { db, checkAuth } from './config.js';
+        import { collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        if(checkAuth() !== 'admin') { alert("Acceso denegado"); window.location.href="index.html"; }
+
+        document.getElementById('btnCreateUser').onclick = async () => {
+            const usuario = document.getElementById('new-user').value;
+            const password = document.getElementById('new-pass').value;
+            
+            if(!usuario || !password) return alert("Llena todos los campos");
+
+            await addDoc(collection(db, "usuarios"), { usuario, password });
+            alert("Usuario creado exitosamente");
+            location.reload();
+        };
+    </script>
+</body>
+</html>
