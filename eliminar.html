@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8"><title>Eliminación de objeto</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h2 style="background:#c0392b; color:white;">Eliminación de objeto</h2>
+    <div class="grid-form">
+        <div class="col">
+            <label><input type="checkbox"> Modelo</label><input type="text" id="m" readonly>
+            <label><input type="checkbox"> No. Parte</label><input type="text" id="np" readonly>
+            <label><input type="checkbox"> Nombre</label><input type="text" id="n" readonly>
+        </div>
+        <div class="col">
+            <label><input type="checkbox"> Cantidad</label><input type="number" id="c" readonly>
+            <label><input type="checkbox"> Costo</label><input type="number" id="co" readonly>
+            <label><input type="checkbox"> Consumible</label><input type="text" id="cons" readonly>
+        </div>
+        <div class="col">
+            <label><input type="checkbox"> Área/Laboratorio</label><input type="text" id="u" readonly>
+            <label><input type="checkbox"> Estante</label><input type="text" id="e" readonly>
+        </div>
+        <div class="col">
+            <label><input type="checkbox"> Lote</label><input type="text" id="l" readonly>
+            <label><input type="checkbox"> Observaciones</label><textarea id="obs" readonly></textarea>
+        </div>
+
+        <div class="form-buttons">
+            <input type="text" id="bus" placeholder="Modelo a buscar...">
+            <button type="button" id="btnBus">Buscar Objeto</button>
+            <button type="button" id="btnDel" style="background:#e74c3c; color:white;">Eliminar Definitivamente</button>
+            <button type="button" onclick="location.href='index.html'">Volver al Inicio</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { db, checkAuth } from './config.js';
+        import { collection, query, where, getDocs, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        
+        // Seguridad: Solo permite entrar si tiene permiso de 'eliminar' o es admin
+        checkAuth('eliminar');
+        let currentId = null;
+
+        // BUSCAR
+        document.getElementById('btnBus').onclick = async () => {
+            const modeloBusqueda = document.getElementById('bus').value;
+            if(!modeloBusqueda) return alert("Escribe un modelo");
+
+            const q = query(collection(db, "productos"), where("modelo", "==", modeloBusqueda));
+            const snap = await getDocs(q);
+
+            if(!snap.empty) {
+                const d = snap.docs[0].data();
+                currentId = snap.docs[0].id;
+                document.getElementById('m').value = d.modelo || '';
+                document.getElementById('np').value = d.noParte || '';
+                document.getElementById('n').value = d.nombre || '';
+                document.getElementById('c').value = d.cantidad || 0;
+                document.getElementById('co').value = d.costo || 0;
+                document.getElementById('cons').value = d.consumible || '';
+                document.getElementById('u').value = d.ubicacion || '';
+                document.getElementById('e').value = d.estante || '';
+                document.getElementById('l').value = d.lote || '';
+                document.getElementById('obs').value = d.observaciones || '';
+                alert("Objeto encontrado. Verifique antes de eliminar.");
+            } else {
+                alert("No se encontró ningún objeto con ese modelo.");
+            }
+        };
+
+        // ELIMINAR
+        document.getElementById('btnDel').onclick = async () => {
+            if(!currentId) return alert("Primero debes buscar un objeto.");
+            
+            if(confirm("¿Estás totalmente seguro de eliminar este registro? Esta acción no se puede deshacer.")) {
+                await deleteDoc(doc(db, "productos", currentId));
+                alert("Objeto eliminado correctamente.");
+                location.reload(); // Limpia la pantalla
+            }
+        };
+    </script>
+</body>
+</html>

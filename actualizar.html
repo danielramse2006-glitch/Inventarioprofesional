@@ -1,54 +1,68 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>Actualizar objeto</title>
+    <meta charset="UTF-8"><title>Actualizar</title>
     <link rel="stylesheet" href="style.css">
     <style>body { background-color: #cccccc; }</style>
 </head>
 <body>
-    <h2 style="background:#888;">Actualizar objeto</h2>
-    <div class="grid-form" style="background:transparent; box-shadow:none;">
+    <h2 style="background:#555;">Actualizar objeto</h2>
+    <form id="f-upd" class="grid-form">
         <div class="col">
-            <label><input type="checkbox"> Modelo</label><input type="text" id="modelo">
-            <label><input type="checkbox"> No. de Parte</label><input type="text" id="noParte">
-            <label><input type="checkbox"> Nombre</label><input type="text" id="nombre">
-            <label><input type="checkbox"> Descripción</label><textarea id="descripcion"></textarea>
+            <label><input type="checkbox"> Modelo</label><input type="text" id="m">
+            <label><input type="checkbox"> Nombre</label><input type="text" id="n">
         </div>
         <div class="col">
-            <label><input type="checkbox"> Cantidad</label><input type="number" id="cantidad">
-            <label><input type="checkbox"> Costo</label><input type="number" id="costo">
-            <label><input type="checkbox"> Consumible</label><select id="consumible"><option>Consumible</option></select>
-            <div class="checkbox-group">
-                <label><input type="checkbox"> Herramienta</label>
-                <label><input type="checkbox"> Equipo</label>
-            </div>
+            <label><input type="checkbox"> Cantidad</label><input type="number" id="c">
+            <label><input type="checkbox"> Costo</label><input type="number" id="co">
         </div>
         <div class="col">
-            <label><input type="checkbox"> Área/Laboratorio</label><input type="text" id="ubicacion">
-            <label><input type="checkbox"> Estante</label><input type="text" id="estante">
-            <label><input type="checkbox"> Contenedor</label><input type="text" id="contenedor">
+            <label><input type="checkbox"> Área</label><input type="text" id="u">
         </div>
         <div class="col">
-            <label><input type="checkbox"> Lote</label><input type="text" id="lote">
-            <label><input type="checkbox"> Presentación</label><input type="text" id="presentacion">
-            <label><input type="checkbox"> Observaciones</label><textarea id="observaciones"></textarea>
-            <div style="margin-top:40px; text-align:right;">
-                <label><input type="checkbox"> Adjuntar Foto</label>
-                <button class="btn-action">Adjuntar Foto</button>
-            </div>
+            <label><input type="checkbox"> Lote</label><input type="text" id="l">
+            <button type="button" class="btn-action">Adjuntar Foto</button>
         </div>
         <div class="form-buttons">
-            <select><option>Modelo</option></select><input type="text" id="search-val">
-            <button id="btnBus">Buscar</button>
-            <button id="btnUpd">Actualizar</button>
-            <button onclick="location.href='index.html'">Ir a Página Principal</button>
+            <input type="text" id="bus" placeholder="Modelo a buscar...">
+            <button type="button" id="btnBus">Buscar</button>
+            <button type="submit">Actualizar</button>
+            <button type="button" onclick="location.href='index.html'">Cerrar</button>
         </div>
-    </div>
+    </form>
     <script type="module">
         import { db, checkAuth } from './config.js';
+        import { collection, query, where, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         checkAuth('actualizar');
-        // Aquí iría la lógica de búsqueda y actualización similar a la anterior
+        let currentId = null;
+
+        document.getElementById('btnBus').onclick = async () => {
+            const q = query(collection(db, "productos"), where("modelo", "==", document.getElementById('bus').value));
+            const snap = await getDocs(q);
+            if(!snap.empty) {
+                const d = snap.docs[0].data(); currentId = snap.docs[0].id;
+                document.getElementById('m').value = d.modelo;
+                document.getElementById('n').value = d.nombre;
+                document.getElementById('c').value = d.cantidad;
+                document.getElementById('co').value = d.costo;
+                document.getElementById('u').value = d.ubicacion;
+                document.getElementById('l').value = d.lote;
+            } else { alert("No encontrado"); }
+        };
+
+        document.getElementById('f-upd').onsubmit = async (e) => {
+            e.preventDefault();
+            if(!currentId) return;
+            await updateDoc(doc(db, "productos", currentId), {
+                modelo: document.getElementById('m').value,
+                nombre: document.getElementById('n').value,
+                cantidad: Number(document.getElementById('c').value),
+                costo: Number(document.getElementById('co').value),
+                ubicacion: document.getElementById('u').value,
+                lote: document.getElementById('l').value
+            });
+            alert("¡Actualizado!");
+        };
     </script>
 </body>
 </html>

@@ -13,15 +13,21 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 
-export function checkAuth(action = null) {
-    const userJson = sessionStorage.getItem("currentUser");
-    if (!userJson) { window.location.href = "login.html"; return; }
-    
-    const user = JSON.parse(userJson);
+// Función de protección de ruta
+export function checkAuth(permisoRequerido = null) {
+    const sesion = sessionStorage.getItem("currentUser");
+    if (!sesion) {
+        window.location.href = "login.html";
+        return null;
+    }
+    const user = JSON.parse(sesion);
+
+    // El admin maestro tiene acceso a TODO siempre
     if (user.usuario === 'admin') return user;
 
-    if (action && !user.permisos[action]) {
-        alert("No tienes permiso para esta acción.");
+    // Si es un usuario normal y la página requiere un permiso que no tiene
+    if (permisoRequerido && (!user.permisos || !user.permisos[permisoRequerido])) {
+        alert("Acceso Denegado: No tienes permiso para esta sección.");
         window.location.href = "index.html";
         return null;
     }

@@ -1,39 +1,40 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>Administrar Usuarios</title>
+    <meta charset="UTF-8"><title>Administración</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h2>Crear perfiles de usuario</h2>
-    <div class="grid-form" style="grid-template-columns: 1fr; width: 450px; margin: auto;">
-        <input type="text" id="new-user" placeholder="Usuario">
-        <input type="password" id="new-pass" placeholder="Contraseña">
+    <h2>Crear Nuevo Perfil (Solo Admin)</h2>
+    <div class="grid-form" style="grid-template-columns: 1fr; width: 400px; margin: auto;">
+        <input type="text" id="nu" placeholder="Usuario">
+        <input type="password" id="np" placeholder="Contraseña">
         <div class="checkbox-group">
-            <p>Permisos del usuario:</p>
-            <label><input type="checkbox" id="p-reg"> Registrar objetos</label>
-            <label><input type="checkbox" id="p-act"> Actualizar objetos</label>
-            <label><input type="checkbox" id="p-del"> Eliminar objetos</label>
+            <label><input type="checkbox" id="p_reg"> Registrar</label>
+            <label><input type="checkbox" id="p_act"> Actualizar</label>
+            <label><input type="checkbox" id="p_del"> Eliminar</label>
         </div>
-        <button id="btnSaveUser" class="btn-action">Guardar Perfil</button>
+        <button id="btnSave" class="btn-action">Guardar Usuario</button>
         <button onclick="location.href='index.html'">Volver</button>
     </div>
     <script type="module">
         import { db, checkAuth } from './config.js';
         import { collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-        if(checkAuth().usuario !== 'admin') window.location.href="index.html";
+        
+        const user = checkAuth();
+        if(user.usuario !== 'admin') window.location.href="index.html";
 
-        document.getElementById('btnSaveUser').onclick = async () => {
-            const user = document.getElementById('new-user').value;
-            const pass = document.getElementById('new-pass').value;
-            const permisos = {
-                registrar: document.getElementById('p-reg').checked,
-                actualizar: document.getElementById('p-act').checked,
-                eliminar: document.getElementById('p-del').checked
-            };
-            await addDoc(collection(db, "usuarios"), { usuario: user, password: pass, permisos: permisos });
-            alert("Usuario creado");
+        document.getElementById('btnSave').onclick = async () => {
+            await addDoc(collection(db, "usuarios"), {
+                usuario: document.getElementById('nu').value,
+                password: document.getElementById('np').value,
+                permisos: {
+                    registrar: document.getElementById('p_reg').checked,
+                    actualizar: document.getElementById('p_act').checked,
+                    eliminar: document.getElementById('p_del').checked
+                }
+            });
+            alert("Usuario creado con éxito");
             location.reload();
         };
     </script>
