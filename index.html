@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Control - Historial de Búsquedas</title>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+    
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1a202c; color: #e2e8f0; margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: auto; background: #2d3748; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        h1 { text-align: center; color: #63b3ed; border-bottom: 2px solid #4a5568; padding-bottom: 10px; }
+        .stats { display: flex; justify-content: space-around; margin-bottom: 20px; text-align: center; }
+        .stat-box { background: #4a5568; padding: 15px; border-radius: 8px; min-width: 150px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #f7fafc; color: #2d3748; border-radius: 8px; overflow: hidden; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #edf2f7; }
+        th { background: #edf2f7; color: #4a5568; text-transform: uppercase; font-size: 12px; }
+        .encontrado { color: #38a169; font-weight: bold; }
+        .no-encontrado { color: #e53e3e; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Historial de Consultas 2026</h1>
+    
+    <div class="stats">
+        <div class="stat-box">
+            <div style="font-size: 0.8em; color: #a0aec0;">Total Búsquedas</div>
+            <div id="totalConsultas" style="font-size: 1.5em; font-weight: bold;">0</div>
+        </div>
+    </div>
+
+    <table id="tablaConsultas">
+        <thead>
+            <tr>
+                <th>Fecha y Hora</th>
+                <th>Código Buscado</th>
+                <th>Estado en Excel</th>
+            </tr>
+        </thead>
+        <tbody id="cuerpoTabla">
+            </tbody>
+    </table>
+</div>
+
+<script>
+    // Configuración con tus claves
+    const firebaseConfig = {
+        apiKey: "AIzaSyCtIagFFJBFRjvg5usXTm575YqOeeDE1G0",
+        authDomain: "mi-inventario-51f82.firebaseapp.com",
+        projectId: "mi-inventario-51f82",
+        databaseURL: "https://mi-inventario-51f82-default-rtdb.firebaseio.com", // URL de tu base de datos
+        storageBucket: "mi-inventario-51f82.firebasestorage.app",
+        messagingSenderId: "79417755416",
+        appId: "1:79417755416:web:e1bbab46cda2bdbb5da56d"
+    };
+
+    // Inicializar Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database().ref('consultas');
+
+    // Escuchar la base de datos en tiempo real
+    db.orderByChild('timestamp').on('value', (snapshot) => {
+        const cuerpo = document.getElementById('cuerpoTabla');
+        const contador = document.getElementById('totalConsultas');
+        cuerpo.innerHTML = ""; 
+        
+        let total = 0;
+
+        snapshot.forEach((childSnapshot) => {
+            const data = childSnapshot.val();
+            total++;
+            
+            const claseEstado = data.estado === "Encontrado" ? "encontrado" : "no-encontrado";
+            
+            const fila = `
+                <tr>
+                    <td>${data.fecha}</td>
+                    <td style="font-family: monospace; font-weight: bold;">${data.codigo}</td>
+                    <td class="${claseEstado}">${data.estado}</td>
+                </tr>
+            `;
+            // Insertar arriba para ver lo más reciente primero
+            cuerpo.insertAdjacentHTML('afterbegin', fila);
+        });
+
+        contador.innerText = total;
+    });
+</script>
+
+</body>
+</html>
