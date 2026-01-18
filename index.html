@@ -1,46 +1,111 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8"><title>Dashboard</title>
+    <meta charset="UTF-8">
+    <title>Página Principal - Inventario</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="bg-blue">
     <header><h1>Página Principal</h1></header>
+    
     <div class="main-container">
         <nav class="side-menu">
             <button onclick="location.href='registro.html'">Registrar</button>
             <button onclick="location.href='actualizar.html'">Actualizar</button>
             <button onclick="location.href='eliminar.html'">Eliminar</button>
-            <button id="btnAdminOnly" style="display:none; background:#f1c40f;" onclick="location.href='usuarios.html'">Administrar Usuarios</button>
+            <button id="navAdmin" style="display:none; background:#f1c40f;" onclick="location.href='usuarios.html'">Administrar Usuarios</button>
             <button>Imprimir Código de Barras</button>
         </nav>
+
         <section class="content">
+            <div class="search-bar-top">
+                <input type="text" id="mainSearch" placeholder="Buscar por Número de Parte...">
+                <button class="btn-action" style="background:#27ae60; color:white; padding:10px 20px; border:none; border-radius:4px;">Buscar</button>
+            </div>
+
             <div class="table-wrapper">
-                <table id="tabla-prod">
+                <table id="inventory-table">
                     <thead>
-                        <tr><th>Modelo</th><th>Nombre</th><th>Cantidad</th><th>Costo</th><th>Ubicación</th></tr>
+                        <tr>
+                            <th>Modelo</th>
+                            <th>No. de Parte</th>
+                            <th>Nombre</th>
+                            <th>Descripción</th>
+                            <th>Cantidad</th>
+                            <th>Costo</th>
+                            <th>Consumible</th>
+                            <th>Tipo</th>
+                            <th>Área/Lab</th>
+                            <th>Estante</th>
+                            <th>Contenedor</th>
+                            <th>Lote</th>
+                            <th>Presentación</th>
+                            <th>Observaciones</th>
+                        </tr>
                     </thead>
-                    <tbody id="inventory-body"></tbody>
+                    <tbody id="inventory-body">
+                        </tbody>
                 </table>
             </div>
         </section>
     </div>
+
     <button class="btn-exit" onclick="sessionStorage.clear(); location.href='login.html'">Salir</button>
+
     <script type="module">
         import { db, checkAuth } from './config.js';
         import { collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         
+        // Verificar sesión y mostrar botón de admin si corresponde
         const user = checkAuth();
-        // SOLO EL ADMIN PUEDE CREAR USUARIOS
-        if(user.usuario === 'admin') document.getElementById('btnAdminOnly').style.display = 'block';
+        if(user && user.usuario === 'admin') {
+            document.getElementById('navAdmin').style.display = 'block';
+        }
 
+        let productosLocal = [];
+
+        // Escucha en tiempo real de Firebase
         onSnapshot(collection(db, "productos"), (snap) => {
+            productosLocal = [];
+            snap.forEach(doc => {
+                productosLocal.push({ id: doc.id, ...doc.data() });
+            });
+            renderizarTabla(productosLocal);
+        });
+
+        // Función para pintar la tabla
+        function renderizarTabla(lista) {
             const tbody = document.getElementById('inventory-body');
             tbody.innerHTML = '';
-            snap.forEach(doc => {
-                const p = doc.data();
-                tbody.innerHTML += `<tr><td>${p.modelo}</td><td>${p.nombre}</td><td>${p.cantidad}</td><td>$${p.costo}</td><td>${p.ubicacion}</td></tr>`;
+            
+            lista.forEach(p => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${p.modelo || '-'}</td>
+                        <td style="font-weight:bold; color:#2980b9;">${p.noParte || '-'}</td>
+                        <td>${p.nombre || '-'}</td>
+                        <td>${p.descripcion || '-'}</td>
+                        <td>${p.cantidad || 0}</td>
+                        <td>$${p.costo || 0}</td>
+                        <td>${p.consumible || '-'}</td>
+                        <td>${p.tipo || '-'}</td>
+                        <td>${p.ubicacion || '-'}</td>
+                        <td>${p.estante || '-'}</td>
+                        <td>${p.contenedor || '-'}</td>
+                        <td>${p.lote || '-'}</td>
+                        <td>${p.presentacion || '-'}</td>
+                        <td>${p.observaciones || '-'}</td>
+                    </tr>`;
             });
+        }
+
+        // Lógica de Filtrado por Número de Parte
+        document.getElementById('mainSearch').addEventListener('input', (e) => {
+            const busqueda = e.target.value.toLowerCase();
+            const filtrados = productosLocal.filter(p => 
+                (p.noParte || "").toLowerCase().includes(busqueda)
+            );
+            renderizarTabla(filtrados);
         });
     </script>
 </body>
