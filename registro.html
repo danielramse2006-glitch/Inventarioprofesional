@@ -1,71 +1,80 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8"><title>Página Principal</title>
+    <meta charset="UTF-8"><title>Registro</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-blue">
-    <header><h1>Página Principal</h1></header>
-    <div class="main-container">
-        <nav class="side-menu">
-            <button onclick="location.href='registro.html'">Registrar</button>
-            <button onclick="location.href='actualizar.html'">Actualizar</button>
-            <button onclick="location.href='eliminar.html'">Eliminar</button>
-            <button id="navAdmin" style="display:none; background:#f1c40f;" onclick="location.href='usuarios.html'">Administrar Usuarios</button>
-            <button>Imprimir Código de Barras</button>
-        </nav>
-        <section class="content">
-            <div style="margin-bottom:15px; display:flex; gap:10px;">
-                <input type="text" id="mainSearch" placeholder="Buscar por Número de Parte..." style="flex:1; padding:12px;">
-                <button class="btn-action" style="background:#27ae60; color:white;">BUSCAR</button>
+<body>
+    <h2 style="text-align:center; background:#eee; padding:15px; margin:0;">Registro de nuevo objeto</h2>
+    <form id="form-reg" class="grid-form">
+        <div class="col">
+            <label>Modelo *</label><input type="text" id="modelo" required>
+            <label>No. de Parte *</label><input type="text" id="noParte" required>
+            <label>Nombre *</label><input type="text" id="nombre" required>
+            <label>Descripción</label><textarea id="descripcion"></textarea>
+        </div>
+        <div class="col">
+            <label>Cantidad *</label><input type="number" id="cantidad" required min="0">
+            <label>Costo *</label><input type="number" id="costo" required min="0">
+            <label>Consumible</label><select id="consumible"><option>Consumible</option><option>No Consumible</option></select>
+            <div style="background:#f9f9f9; padding:10px; border:1px solid #ddd;">
+                <label><input type="checkbox" name="tipo" value="Herramienta"> Herramienta</label><br>
+                <label><input type="checkbox" name="tipo" value="Equipo"> Equipo</label><br>
+                <label><input type="checkbox" name="tipo" value="Pieza"> Pieza</label>
             </div>
-            <div class="table-wrapper">
-                <table id="tabla-prod">
-                    <thead>
-                        <tr>
-                            <th>Modelo</th><th>No. Parte</th><th>Nombre</th><th>Descripción</th>
-                            <th>Cantidad</th><th>Costo</th><th>Consumible</th><th>Tipo</th>
-                            <th>Área</th><th>Estante</th><th>Contenedor</th>
-                            <th>Lote</th><th>Presentación</th><th>Observaciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="inventory-body"></tbody>
-                </table>
-            </div>
-        </section>
-    </div>
-    <button class="btn-exit" onclick="sessionStorage.clear(); location.href='login.html'">Salir</button>
+        </div>
+        <div class="col">
+            <label>Ubicación (Área)</label><input type="text" id="ubicacion">
+            <label>Estante</label><input type="text" id="estante">
+            <label>Contenedor</label><input type="text" id="contenedor">
+        </div>
+        <div class="col">
+            <label>Lote</label><input type="text" id="lote">
+            <label>Presentación</label><input type="text" id="presentacion">
+            <label>Observaciones</label><textarea id="observaciones"></textarea>
+        </div>
+        <div class="form-buttons">
+            <button type="submit" class="btn-action">Registrar</button>
+            <button type="reset" class="btn-action">Limpiar</button>
+            <button type="button" class="btn-action" onclick="location.href='index.html'">Volver</button>
+        </div>
+    </form>
     <script type="module">
         import { db, checkAuth } from './config.js';
-        import { collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-        
-        const user = checkAuth();
-        if(user && user.usuario === 'admin') document.getElementById('navAdmin').style.display = 'block';
+        import { collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        checkAuth('registrar');
 
-        let productos = [];
-        onSnapshot(collection(db, "productos"), (snap) => {
-            productos = [];
-            snap.forEach(doc => { productos.push(doc.data()); });
-            render(productos);
-        });
+        document.getElementById('form-reg').onsubmit = async (e) => {
+            e.preventDefault();
+            const noParte = document.getElementById('noParte').value.trim();
+            const cant = Number(document.getElementById('cantidad').value);
+            
+            if(cant < 0) return alert("La cantidad no puede ser negativa.");
 
-        function render(lista) {
-            const tbody = document.getElementById('inventory-body');
-            tbody.innerHTML = '';
-            lista.forEach(p => {
-                tbody.innerHTML += `<tr>
-                    <td>${p.modelo||''}</td><td style="font-weight:bold;">${p.noParte||''}</td>
-                    <td>${p.nombre||''}</td><td>${p.descripcion||''}</td><td>${p.cantidad||0}</td>
-                    <td>$${p.costo||0}</td><td>${p.consumible||''}</td><td>${p.tipo||''}</td>
-                    <td>${p.ubicacion||''}</td><td>${p.estante||''}</td><td>${p.contenedor||''}</td>
-                    <td>${p.lote||''}</td><td>${p.presentacion||''}</td><td>${p.observaciones||''}</td>
-                </tr>`;
+            // Validar si existe No. de Parte
+            const q = query(collection(db, "productos"), where("noParte", "==", noParte));
+            const snap = await getDocs(q);
+            if(!snap.empty) return alert("¡Error! Ya existe un producto con este Número de Parte.");
+
+            const tipos = Array.from(document.querySelectorAll('input[name="tipo"]:checked')).map(cb => cb.value);
+            await addDoc(collection(db, "productos"), {
+                modelo: document.getElementById('modelo').value,
+                noParte: noParte,
+                nombre: document.getElementById('nombre').value,
+                descripcion: document.getElementById('descripcion').value,
+                cantidad: cant,
+                costo: Number(document.getElementById('costo').value),
+                consumible: document.getElementById('consumible').value,
+                tipo: tipos.join(', '),
+                ubicacion: document.getElementById('ubicacion').value,
+                estante: document.getElementById('estante').value,
+                contenedor: document.getElementById('contenedor').value,
+                lote: document.getElementById('lote').value,
+                presentacion: document.getElementById('presentacion').value,
+                observaciones: document.getElementById('observaciones').value
             });
-        }
-        document.getElementById('mainSearch').addEventListener('input', (e) => {
-            const val = e.target.value.toLowerCase();
-            render(productos.filter(p => (p.noParte||'').toLowerCase().includes(val)));
-        });
+            alert("Registrado correctamente"); e.target.reset();
+        };
     </script>
 </body>
 </html>
