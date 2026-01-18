@@ -1,17 +1,113 @@
-body { font-family: sans-serif; margin: 0; padding: 0; }
-.bg-blue { background-color: #0080ff; color: white; }
-header h1 { text-align: center; padding: 20px; }
-.main-container { display: flex; padding: 20px; gap: 20px; }
-.side-menu { display: flex; flex-direction: column; gap: 10px; width: 220px; }
-.side-menu button { padding: 15px; font-weight: bold; cursor: pointer; border: 1px solid #ccc; }
-.content { flex: 1; background: white; color: black; padding: 15px; border-radius: 4px; }
-.table-wrapper { overflow-x: auto; max-height: 400px; border: 1px solid #ccc; }
-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-.grid-form { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; padding: 20px; background: white; }
-.col { display: flex; flex-direction: column; gap: 10px; }
-input, select, textarea { padding: 8px; border: 1px solid #ccc; border-radius: 3px; }
-.form-buttons { grid-column: span 4; display: flex; justify-content: center; gap: 10px; margin-top: 20px; }
-.btn-action { padding: 10px 20px; cursor: pointer; }
-.btn-exit { position: fixed; bottom: 20px; right: 20px; padding: 10px 30px; }
-h2 { text-align: center; color: white; padding: 15px; margin: 0; }
+/* Estilos Generales */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f7f6;
+}
+
+.bg-blue {
+    background-color: #0080ff; [span_1](start_span)/* Azul de la imagen principal[span_1](end_span) */
+    color: white;
+    min-height: 100vh;
+}
+
+header h1 {
+    text-align: center;
+    padding: 20px;
+    margin: 0;
+    font-weight: bold;
+}
+
+/* Contenedor Principal */
+.main-container {
+    display: flex;
+    padding: 20px;
+    gap: 20px;
+}
+
+[span_2](start_span)/* Menú Lateral[span_2](end_span) */
+.side-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 250px;
+}
+
+.side-menu button {
+    padding: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    background-color: #e0e0e0;
+    border: 1px solid #ccc;
+    text-align: center;
+    transition: 0.3s;
+}
+
+.side-menu button:hover {
+    background-color: #d0d0d0;
+}
+
+/* Área de Contenido y Tabla */
+.content {
+    flex: 1;
+    background: white;
+    color: black;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+/* Contenedor para scroll horizontal */
+.table-wrapper {
+    overflow-x: auto; 
+    border: 1px solid #ddd;
+    margin-top: 15px;
+}
+
+table {
+    width: 100%;
+    min-width: 1800px; [span_3](start_span)/* Obliga a la tabla a expandirse para ver todos los campos[span_3](end_span) */
+    border-collapse: collapse;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 12px;
+    text-align: left;
+    font-size: 14px;
+}
+
+th {
+    background-color: #2c3e50;
+    color: white;
+    position: sticky;
+    top: 0;
+}
+
+tr:nth-child(even) { background-color: #f9f9f9; }
+
+/* Buscador Superior */
+.search-bar-top {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.search-bar-top input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+/* Botón Salir */
+.btn-exit {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 10px 30px;
+    background-color: #e0e0e0;
+    border: 1px solid #ccc;
+    cursor: pointer;
+}
