@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard - Inventario</title>
+    <title>Página Principal</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="bg-blue">
@@ -12,32 +12,46 @@
             <button onclick="location.href='registro.html'">Registrar</button>
             <button onclick="location.href='actualizar.html'">Actualizar</button>
             <button onclick="location.href='eliminar.html'">Eliminar</button>
-            <button id="nav-admin" onclick="location.href='usuarios.html'" style="display:none; background:#f1c40f;">Administrar Usuarios</button>
+            <button id="btnAdminNav" style="display:none;" onclick="location.href='usuarios.html'">Administrar Usuarios</button>
+            <button>Imprimir Código de Barras</button>
         </nav>
         <section class="content">
-            <table>
-                <thead>
-                    <tr><th>Modelo</th><th>Nombre</th><th>Cantidad</th><th>Ubicación</th></tr>
-                </thead>
-                <tbody id="inventory-body"></tbody>
-            </table>
+            <div class="search-bar-top">
+                <select id="search-type"><option value="modelo">Modelo</option></select>
+                <input type="text" id="search-input" placeholder="Buscar...">
+                <button id="btnBuscar">Buscar</button>
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Modelo</th><th>Nombre</th><th>Número de Parte</th><th>Descripción</th>
+                            <th>Costo</th><th>Cantidad</th><th>Tipo de Consumo</th><th>Herramienta</th>
+                            <th>Ubicación Área</th><th>Imagen</th><th>Código de Barras</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventory-body"></tbody>
+                </table>
+            </div>
         </section>
     </div>
     <button class="btn-exit" onclick="sessionStorage.clear(); location.href='login.html'">Salir</button>
-
     <script type="module">
         import { db, checkAuth } from './config.js';
         import { collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
         const user = checkAuth();
-        if(user === 'admin') document.getElementById('nav-admin').style.display = 'block';
-
+        if(user.usuario === 'admin') document.getElementById('btnAdminNav').style.display = 'block';
+        
         onSnapshot(collection(db, "productos"), (snap) => {
             const tbody = document.getElementById('inventory-body');
             tbody.innerHTML = '';
             snap.forEach(doc => {
                 const p = doc.data();
-                tbody.innerHTML += `<tr><td>${p.modelo}</td><td>${p.nombre}</td><td>${p.cantidad}</td><td>${p.ubicacion}</td></tr>`;
+                tbody.innerHTML += `<tr>
+                    <td>${p.modelo}</td><td>${p.nombre}</td><td>${p.noParte}</td><td>${p.descripcion}</td>
+                    <td>${p.costo}</td><td>${p.cantidad}</td><td>${p.consumible}</td><td>${p.tipo}</td>
+                    <td>${p.ubicacion}</td><td><img src="${p.img || ''}" width="30"></td><td>${p.codigo || ''}</td>
+                </tr>`;
             });
         });
     </script>

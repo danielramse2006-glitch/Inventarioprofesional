@@ -13,11 +13,17 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 
-// Función de protección de rutas
-export function checkAuth() {
-    const user = sessionStorage.getItem("currentUser");
-    if (!user && !window.location.pathname.includes("login.html")) {
-        window.location.href = "login.html";
+export function checkAuth(action = null) {
+    const userJson = sessionStorage.getItem("currentUser");
+    if (!userJson) { window.location.href = "login.html"; return; }
+    
+    const user = JSON.parse(userJson);
+    if (user.usuario === 'admin') return user;
+
+    if (action && !user.permisos[action]) {
+        alert("No tienes permiso para esta acción.");
+        window.location.href = "index.html";
+        return null;
     }
     return user;
 }

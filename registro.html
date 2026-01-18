@@ -2,52 +2,70 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Registro de Objeto</title>
+    <title>Registro de nuevo objeto</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <h2>Registro de nuevo objeto</h2>
-    <form id="form-registro" class="grid-form">
+    <form id="form-reg" class="grid-form">
         <div class="col">
-            <input type="text" id="modelo" placeholder="Modelo" required>
-            <input type="text" id="noParte" placeholder="No. de Parte" required>
-            <input type="text" id="nombre" placeholder="Nombre" required>
+            <input type="text" id="modelo" placeholder="Modelo">
+            <input type="text" id="noParte" placeholder="No. de Parte">
+            <input type="text" id="nombre" placeholder="Nombre">
+            <textarea id="descripcion" placeholder="Descripción"></textarea>
         </div>
         <div class="col">
-            <input type="number" id="cantidad" placeholder="Cantidad" required>
-            <input type="number" id="costo" placeholder="Costo" required>
+            <input type="number" id="cantidad" placeholder="Cantidad">
+            <input type="number" id="costo" placeholder="Costo">
             <select id="consumible"><option>Consumible</option><option>No Consumible</option></select>
+            <div class="checkbox-group">
+                <span>Tipo:</span>
+                <label><input type="checkbox" name="tipo" value="Herramienta"> Herramienta</label>
+                <label><input type="checkbox" name="tipo" value="Equipo"> Equipo</label>
+                <label><input type="checkbox" name="tipo" value="Pieza"> Pieza</label>
+            </div>
         </div>
         <div class="col">
-            <input type="text" id="ubicacion" placeholder="Área/Laboratorio" required>
+            <p>Ubicación</p>
+            <input type="text" id="ubicacion" placeholder="Área/Laboratorio">
             <input type="text" id="estante" placeholder="Estante">
+            <input type="text" id="contenedor" placeholder="Contenedor">
+        </div>
+        <div class="col">
+            <input type="text" id="lote" placeholder="Lote">
+            <input type="text" id="presentacion" placeholder="Presentación">
+            <textarea id="observaciones" placeholder="Observaciones"></textarea>
         </div>
         <div class="form-buttons">
-            <button type="submit" class="btn-action">Registrar</button>
+            <button type="submit">Registrar</button>
+            <button type="reset">Limpiar</button>
             <button type="button" onclick="location.href='index.html'">Ir a Página Principal</button>
         </div>
     </form>
-
     <script type="module">
         import { db, checkAuth } from './config.js';
         import { collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-        
-        checkAuth();
-
-        document.getElementById('form-registro').onsubmit = async (e) => {
+        checkAuth('registrar');
+        document.getElementById('form-reg').onsubmit = async (e) => {
             e.preventDefault();
+            const tipos = Array.from(document.querySelectorAll('input[name="tipo"]:checked')).map(cb => cb.value);
             await addDoc(collection(db, "productos"), {
                 modelo: document.getElementById('modelo').value,
                 noParte: document.getElementById('noParte').value,
                 nombre: document.getElementById('nombre').value,
+                descripcion: document.getElementById('descripcion').value,
                 cantidad: Number(document.getElementById('cantidad').value),
                 costo: Number(document.getElementById('costo').value),
                 consumible: document.getElementById('consumible').value,
+                tipo: tipos.join(', '),
                 ubicacion: document.getElementById('ubicacion').value,
-                usuarioRegistró: sessionStorage.getItem("currentUser")
+                estante: document.getElementById('estante').value,
+                contenedor: document.getElementById('contenedor').value,
+                lote: document.getElementById('lote').value,
+                presentacion: document.getElementById('presentacion').value,
+                observaciones: document.getElementById('observaciones').value
             });
-            alert("Registrado");
-            e.target.reset();
+            alert("Objeto registrado"); e.target.reset();
         };
     </script>
 </body>

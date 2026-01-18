@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Actualizar objeto</title>
+    <link rel="stylesheet" href="style.css">
+    <style>body { background-color: #cccccc; }</style>
+</head>
+<body>
+    <h2 style="background:#888;">Actualizar objeto</h2>
+    <div class="grid-form" style="background:transparent; box-shadow:none;">
+        <div class="col">
+            <label><input type="checkbox"> Modelo</label><input type="text" id="modelo">
+            <label><input type="checkbox"> No. de Parte</label><input type="text" id="noParte">
+            <label><input type="checkbox"> Nombre</label><input type="text" id="nombre">
+            <label><input type="checkbox"> Descripción</label><textarea id="descripcion"></textarea>
+        </div>
+        <div class="col">
+            <label><input type="checkbox"> Cantidad</label><input type="number" id="cantidad">
+            <label><input type="checkbox"> Costo</label><input type="number" id="costo">
+            <label><input type="checkbox"> Consumible</label><select id="consumible"><option>Consumible</option></select>
+            <div class="checkbox-group">
+                <label><input type="checkbox"> Herramienta</label>
+                <label><input type="checkbox"> Equipo</label>
+            </div>
+        </div>
+        <div class="col">
+            <label><input type="checkbox"> Área/Laboratorio</label><input type="text" id="ubicacion">
+            <label><input type="checkbox"> Estante</label><input type="text" id="estante">
+            <label><input type="checkbox"> Contenedor</label><input type="text" id="contenedor">
+        </div>
+        <div class="col">
+            <label><input type="checkbox"> Lote</label><input type="text" id="lote">
+            <label><input type="checkbox"> Presentación</label><input type="text" id="presentacion">
+            <label><input type="checkbox"> Observaciones</label><textarea id="observaciones"></textarea>
+            <div style="margin-top:40px; text-align:right;">
+                <label><input type="checkbox"> Adjuntar Foto</label>
+                <button class="btn-action">Adjuntar Foto</button>
+            </div>
+        </div>
+        <div class="form-buttons">
+            <select><option>Modelo</option></select><input type="text" id="search-val">
+            <button id="btnBus">Buscar</button>
+            <button id="btnUpd">Actualizar</button>
+            <button onclick="location.href='index.html'">Ir a Página Principal</button>
+        </div>
+    </div>
+    <script type="module">
+        import { db, checkAuth } from './config.js';
+        checkAuth('actualizar');
+        // Aquí iría la lógica de búsqueda y actualización similar a la anterior
+    </script>
+</body>
+</html>
