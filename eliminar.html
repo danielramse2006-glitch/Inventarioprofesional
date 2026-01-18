@@ -1,83 +1,86 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8"><title>Eliminación de objeto</title>
+    <meta charset="UTF-8"><title>Actualizar</title>
     <link rel="stylesheet" href="style.css">
+    <style>body { background-color: #cccccc; }</style>
 </head>
 <body>
-    <h2 style="background:#c0392b; color:white;">Eliminación de objeto</h2>
-    <div class="grid-form">
+    <h2 style="text-align:center; background:#999; color:white; padding:15px; margin:0;">Actualizar objeto</h2>
+    <form id="f-upd" class="grid-form" style="background:transparent;">
         <div class="col">
-            <label><input type="checkbox"> Modelo</label><input type="text" id="m" readonly>
-            <label><input type="checkbox"> No. Parte</label><input type="text" id="np" readonly>
-            <label><input type="checkbox"> Nombre</label><input type="text" id="n" readonly>
+            <label class="check-label"><input type="checkbox"> Modelo</label><input type="text" id="m">
+            <label class="check-label"><input type="checkbox"> No. Parte</label><input type="text" id="np">
+            <label class="check-label"><input type="checkbox"> Nombre</label><input type="text" id="n">
+            <label class="check-label"><input type="checkbox"> Descripción</label><textarea id="d"></textarea>
         </div>
         <div class="col">
-            <label><input type="checkbox"> Cantidad</label><input type="number" id="c" readonly>
-            <label><input type="checkbox"> Costo</label><input type="number" id="co" readonly>
-            <label><input type="checkbox"> Consumible</label><input type="text" id="cons" readonly>
+            <label class="check-label"><input type="checkbox"> Cantidad</label><input type="number" id="c">
+            <label class="check-label"><input type="checkbox"> Costo</label><input type="number" id="co">
+            <label class="check-label"><input type="checkbox"> Consumible</label><select id="con"><option>Consumible</option></select>
         </div>
         <div class="col">
-            <label><input type="checkbox"> Área/Laboratorio</label><input type="text" id="u" readonly>
-            <label><input type="checkbox"> Estante</label><input type="text" id="e" readonly>
+            <label class="check-label"><input type="checkbox"> Área</label><input type="text" id="u">
+            <label class="check-label"><input type="checkbox"> Estante</label><input type="text" id="e">
+            <label class="check-label"><input type="checkbox"> Contenedor</label><input type="text" id="ct">
         </div>
         <div class="col">
-            <label><input type="checkbox"> Lote</label><input type="text" id="l" readonly>
-            <label><input type="checkbox"> Observaciones</label><textarea id="obs" readonly></textarea>
+            <label class="check-label"><input type="checkbox"> Lote</label><input type="text" id="l">
+            <label class="check-label"><input type="checkbox"> Presentación</label><input type="text" id="p">
+            <label class="check-label"><input type="checkbox"> Observaciones</label><textarea id="obs"></textarea>
+            <button type="button" class="btn-action" style="margin-top:10px;">Adjuntar Foto</button>
         </div>
-
         <div class="form-buttons">
-            <input type="text" id="bus" placeholder="Modelo a buscar...">
-            <button type="button" id="btnBus">Buscar Objeto</button>
-            <button type="button" id="btnDel" style="background:#e74c3c; color:white;">Eliminar Definitivamente</button>
-            <button type="button" onclick="location.href='index.html'">Volver al Inicio</button>
+            <select id="crit" style="width:150px;"><option value="noParte">No. Parte</option><option value="nombre">Nombre</option></select>
+            <input type="text" id="val" placeholder="Dato a buscar...">
+            <button type="button" id="btnBus" class="btn-action">Buscar</button>
+            <button type="submit" class="btn-action">Actualizar</button>
+            <button type="button" class="btn-action" onclick="location.href='index.html'">Volver</button>
         </div>
-    </div>
-
+    </form>
     <script type="module">
         import { db, checkAuth } from './config.js';
-        import { collection, query, where, getDocs, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-        
-        // Seguridad: Solo permite entrar si tiene permiso de 'eliminar' o es admin
-        checkAuth('eliminar');
+        import { collection, query, where, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        checkAuth('actualizar');
         let currentId = null;
 
-        // BUSCAR
         document.getElementById('btnBus').onclick = async () => {
-            const modeloBusqueda = document.getElementById('bus').value;
-            if(!modeloBusqueda) return alert("Escribe un modelo");
+            const crit = document.getElementById('crit').value;
+            const val = document.getElementById('val').value.trim();
+            if(!val) return alert("Escribe algo para buscar");
 
-            const q = query(collection(db, "productos"), where("modelo", "==", modeloBusqueda));
+            const q = query(collection(db, "productos"), where(crit, "==", val));
             const snap = await getDocs(q);
-
             if(!snap.empty) {
-                const d = snap.docs[0].data();
-                currentId = snap.docs[0].id;
-                document.getElementById('m').value = d.modelo || '';
-                document.getElementById('np').value = d.noParte || '';
-                document.getElementById('n').value = d.nombre || '';
-                document.getElementById('c').value = d.cantidad || 0;
-                document.getElementById('co').value = d.costo || 0;
-                document.getElementById('cons').value = d.consumible || '';
-                document.getElementById('u').value = d.ubicacion || '';
-                document.getElementById('e').value = d.estante || '';
-                document.getElementById('l').value = d.lote || '';
-                document.getElementById('obs').value = d.observaciones || '';
-                alert("Objeto encontrado. Verifique antes de eliminar.");
-            } else {
-                alert("No se encontró ningún objeto con ese modelo.");
-            }
+                const d = snap.docs[0].data(); currentId = snap.docs[0].id;
+                document.getElementById('m').value = d.modelo; document.getElementById('np').value = d.noParte;
+                document.getElementById('n').value = d.nombre; document.getElementById('d').value = d.descripcion;
+                document.getElementById('c').value = d.cantidad; document.getElementById('co').value = d.costo;
+                document.getElementById('u').value = d.ubicacion; document.getElementById('e').value = d.estante;
+                document.getElementById('ct').value = d.contenedor; document.getElementById('l').value = d.lote;
+                document.getElementById('p').value = d.presentacion; document.getElementById('obs').value = d.observaciones;
+                alert("Datos cargados");
+            } else { alert("No encontrado"); }
         };
 
-        // ELIMINAR
-        document.getElementById('btnDel').onclick = async () => {
-            if(!currentId) return alert("Primero debes buscar un objeto.");
-            
-            if(confirm("¿Estás totalmente seguro de eliminar este registro? Esta acción no se puede deshacer.")) {
-                await deleteDoc(doc(db, "productos", currentId));
-                alert("Objeto eliminado correctamente.");
-                location.reload(); // Limpia la pantalla
-            }
+        document.getElementById('f-upd').onsubmit = async (e) => {
+            e.preventDefault();
+            if(!currentId) return alert("Primero busca un producto");
+            await updateDoc(doc(db, "productos", currentId), {
+                modelo: document.getElementById('m').value,
+                noParte: document.getElementById('np').value,
+                nombre: document.getElementById('n').value,
+                descripcion: document.getElementById('d').value,
+                cantidad: Number(document.getElementById('c').value),
+                costo: Number(document.getElementById('co').value),
+                ubicacion: document.getElementById('u').value,
+                estante: document.getElementById('e').value,
+                contenedor: document.getElementById('ct').value,
+                lote: document.getElementById('l').value,
+                presentacion: document.getElementById('p').value,
+                observaciones: document.getElementById('obs').value
+            });
+            alert("Actualizado correctamente");
         };
     </script>
 </body>
