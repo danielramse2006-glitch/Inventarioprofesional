@@ -14,31 +14,40 @@ header h1 { text-align: center; padding: 20px; margin: 0; text-transform: upperc
 
 .content { flex: 1; background: white; color: #333; padding: 20px; border-radius: 5px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
 
-/* --- TABLA CON SCROLL E IMÁGENES --- */
+/* --- TABLA (Sin columna de foto) --- */
 .table-wrapper { overflow-x: auto; border: 1px solid #ccc; margin-top: 15px; background: white; }
-table { width: 100%; min-width: 1900px; border-collapse: collapse; }
+table { width: 100%; min-width: 1800px; border-collapse: collapse; }
 th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 14px; }
 th { background-color: #2c3e50; color: white; position: sticky; top: 0; z-index: 10; }
 
-/* Estilo de la Foto del Producto */
-.prod-img {
-    width: 50px;
-    height: 50px;
-    object-fit: cover;
-    border-radius: 4px;
-    border: 1px solid #ccc;
+/* Efecto al pasar el mouse por la fila */
+#inventory-body tr:hover {
+    background-color: #e3f2fd !important;
     cursor: pointer;
-    transition: transform 0.2s;
 }
 
-/* Zoom al pasar el mouse */
-.prod-img:hover {
-    transform: scale(3.5);
-    z-index: 999;
-    position: relative;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+/* --- VISOR DE IMAGEN (Abajo) --- */
+#image-preview-container {
+    margin-top: 25px;
+    padding: 20px;
+    background: #f9f9f9;
+    border: 2px dashed #bbb;
+    border-radius: 10px;
+    text-align: center;
+    min-height: 350px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
-/* --- BOTONES Y BUSCADOR --- */
-.btn-action { padding: 10px 25px; cursor: pointer; font-weight: bold; border: 1px solid #999; border-radius: 4px; }
+#main-preview-img {
+    max-height: 300px;
+    max-width: 100%;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    background: white;
+}
+
+/* --- OTROS --- */
 .btn-exit { position: fixed; bottom: 20px; right: 20px; padding: 10px 30px; background: #c0392b; color: white; border: none; cursor: pointer; }

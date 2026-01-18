@@ -17,15 +17,14 @@
         </nav>
 
         <section class="content">
-            <div style="margin-bottom:15px; display:flex; gap:10px;">
-                <input type="text" id="mainSearch" placeholder="Buscar por No. Parte, Modelo o Nombre..." style="flex:1; padding:12px; border-radius:5px; border:1px solid #ccc;">
+            <div style="margin-bottom:15px;">
+                <input type="text" id="mainSearch" placeholder="Buscar por No. Parte, Modelo o Nombre..." style="width:100%; padding:12px; border-radius:5px; border:1px solid #ccc;">
             </div>
 
             <div class="table-wrapper">
                 <table id="tabla-prod">
                     <thead>
                         <tr>
-                            <th style="width:60px;">Foto</th>
                             <th>Modelo</th>
                             <th>No. Parte</th>
                             <th>Nombre</th>
@@ -45,6 +44,11 @@
                     <tbody id="inventory-body"></tbody>
                 </table>
             </div>
+
+            <div id="image-preview-container">
+                <h3 id="preview-title" style="margin-bottom:15px; color: #555;">Pasa el mouse sobre un producto para ver su imagen</h3>
+                <img id="main-preview-img" src="imagenes/sin_foto.jpg" alt="Previsualización">
+            </div>
         </section>
     </div>
 
@@ -59,7 +63,7 @@
 
         let productos = [];
 
-        // Escuchar base de datos
+        // Escuchar Firebase
         onSnapshot(collection(db, "productos"), (snap) => {
             productos = [];
             snap.forEach(doc => { productos.push(doc.data()); });
@@ -71,17 +75,25 @@
             tbody.innerHTML = '';
             
             lista.forEach(p => {
-                // LÓGICA DE IMAGEN AUTOMÁTICA
-                // Se limpia el nombre del modelo para evitar errores de espacios
-                const nombreFoto = (p.modelo || "default").trim();
-                const rutaImagen = `imagenes/${nombreFoto}.jpg`;
+                const tr = document.createElement('tr');
 
-                tbody.innerHTML += `<tr>
-                    <td>
-                        <img src="${rutaImagen}" 
-                             onerror="this.onerror=null;this.src='imagenes/sin_foto.jpg';" 
-                             class="prod-img">
-                    </td>
+                // LÓGICA DE IMAGEN POR NOMBRE AL PASAR EL MOUSE (Hover)
+                tr.onmouseenter = () => {
+                    const nombreParaFoto = (p.nombre || "sin_nombre").trim();
+                    const imgPreview = document.getElementById('main-preview-img');
+                    const titlePreview = document.getElementById('preview-title');
+                    
+                    // Busca la imagen basada en el NOMBRE (ej: Esp 32.jpg)
+                    imgPreview.src = `imagenes/${nombreParaFoto}.jpg`;
+                    titlePreview.innerText = `Producto: ${nombreParaFoto}`;
+                    
+                    // Si no existe, pone la imagen por defecto
+                    imgPreview.onerror = () => { 
+                        imgPreview.src = 'imagenes/sin_foto.jpg'; 
+                    };
+                };
+
+                tr.innerHTML = `
                     <td>${p.modelo || '-'}</td>
                     <td style="font-weight:bold; color:#0056b3;">${p.noParte || '-'}</td>
                     <td>${p.nombre || '-'}</td>
@@ -96,11 +108,12 @@
                     <td>${p.lote || '-'}</td>
                     <td>${p.presentacion || '-'}</td>
                     <td>${p.observaciones || '-'}</td>
-                </tr>`;
+                `;
+                tbody.appendChild(tr);
             });
         }
 
-        // Buscador filtrando por múltiples campos
+        // Buscador
         document.getElementById('mainSearch').addEventListener('input', (e) => {
             const term = e.target.value.toLowerCase();
             const filtrados = productos.filter(p => 
