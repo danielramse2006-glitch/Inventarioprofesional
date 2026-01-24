@@ -8,42 +8,46 @@
         .btn-add-item { background: #27ae60; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-weight: bold; }
         .btn-logout { background: #c0392b !important; color: white !important; margin-top: auto; }
         
-        /* --- VISOR DE IMAGEN MEJORADO (MÁS GRANDE) --- */
-        #image-preview-container {
+        /* --- NUEVO VISOR INFERIOR GIGANTE --- */
+        .bottom-preview {
             margin-top: 20px;
-            padding: 10px;
             background: white;
-            border-radius: 10px;
-            border: 2px solid #3498db; /* Borde azul para resaltar */
+            border-radius: 12px;
+            border: 3px solid #3498db;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            box-shadow: 0 -5px 25px rgba(0,0,0,0.1);
+        }
+
+        .preview-image-box {
+            flex: 1;
             text-align: center;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-            overflow: hidden;
+            max-height: 500px;
         }
 
         #main-preview-img {
-            width: 100%;
-            max-height: 450px; /* Tamaño aumentado */
-            object-fit: contain; /* Para que no se deforme */
-            border-radius: 5px;
-            margin-top: 8px;
-            transition: transform 0.3s ease; /* Efecto suave */
+            max-width: 100%;
+            max-height: 480px; /* Altura máxima considerable */
+            object-fit: contain;
+            border-radius: 8px;
+            border: 1px solid #eee;
         }
 
-        #image-preview-container:hover #main-preview-img {
-            transform: scale(1.05); /* Zoom ligero al pasar sobre el cuadro */
+        .preview-info-box {
+            flex: 1;
+            color: #2c3e50;
         }
 
-        #preview-title {
-            background: #3498db;
-            color: white;
-            padding: 8px;
-            margin: -10px -10px 10px -10px;
-            font-size: 0.9em;
-            font-weight: bold;
-            text-transform: uppercase;
+        .preview-info-box h2 {
+            margin: 0 0 10px 0;
+            color: #3498db;
+            border-bottom: 2px solid #3498db;
+            display: inline-block;
         }
 
-        /* Estilos de impresión del Vale */
+        /* Estilos de impresión */
         #print-vale { display: none; }
         @media print {
             body * { visibility: hidden; }
@@ -73,18 +77,13 @@
                 <button onclick="procesarSalida()" style="width:100%; background:#e67e22; color:white; border:none; padding:10px; margin-top:10px; font-weight:bold; cursor:pointer; border-radius:4px;">GENERAR VALE</button>
             </div>
 
-            <div id="image-preview-container">
-                <div id="preview-title">Vista del Producto</div>
-                <img id="main-preview-img" src="imagenes/sin_foto.jpg" alt="Vista previa">
-                <p id="prod-name-display" style="color: #333; font-size: 0.8em; margin-top: 5px; font-weight: bold;">-</p>
-            </div>
-
             <button class="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button>
         </nav>
 
-        <section class="content">
+        <section class="content" style="flex:1; display: flex; flex-direction: column;">
             <input type="text" id="mainSearch" placeholder="Buscar por modelo, nombre o no. parte..." style="width:100%; padding:12px; margin-bottom:15px; border-radius:5px; border:none;">
-            <div class="table-wrapper">
+            
+            <div class="table-wrapper" style="max-height: 400px;">
                 <table>
                     <thead>
                         <tr>
@@ -94,6 +93,17 @@
                     </thead>
                     <tbody id="inventory-body"></tbody>
                 </table>
+            </div>
+
+            <div class="bottom-preview">
+                <div class="preview-image-box">
+                    <img id="main-preview-img" src="imagenes/sin_foto.jpg" alt="Vista previa">
+                </div>
+                <div class="preview-info-box">
+                    <p style="text-transform: uppercase; font-size: 0.8em; font-weight: bold; color: #7f8c8d; margin-bottom: 5px;">Detalles del Producto seleccionado:</p>
+                    <h2 id="prod-name-display">Selecciona un producto</h2>
+                    <p id="prod-detail-display" style="font-size: 1.1em; line-height: 1.5;">Pasa el mouse sobre la tabla para ver la imagen en alta resolución.</p>
+                </div>
             </div>
         </section>
     </div>
@@ -120,7 +130,7 @@
             </thead>
             <tbody id="f-lista"></tbody>
         </table>
-        <div style="margin-top:120px; display:flex; justify-content:space-around;">
+        <div style="margin-top:100px; display:flex; justify-content:space-around;">
             <p style="border-top:1px solid #000; width:220px; text-align:center; padding-top:5px;">Firma Almacén (Entrega)</p>
             <p style="border-top:1px solid #000; width:220px; text-align:center; padding-top:5px;">Firma Responsable (Recibe)</p>
         </div>
@@ -135,10 +145,7 @@
         let productos = [];
         let carrito = [];
 
-        window.cerrarSesion = () => {
-            sessionStorage.clear();
-            window.location.href = 'login.html';
-        };
+        window.cerrarSesion = () => { sessionStorage.clear(); window.location.href = 'login.html'; };
 
         const puedeHacerSalidas = (user.usuario === 'admin' || p.salidas);
 
@@ -169,14 +176,20 @@
             lista.forEach(item => {
                 const tr = document.createElement('tr');
 
-                // LÓGICA DE VISOR DE IMAGEN (Hover)
+                // Lógica de Visor Gigante al pasar el mouse
                 tr.onmouseenter = () => {
-                    const nombreParaFoto = (item.nombre || "sin_nombre").trim();
+                    const nombreFoto = (item.nombre || "sin_nombre").trim();
                     const imgPreview = document.getElementById('main-preview-img');
                     const nameDisplay = document.getElementById('prod-name-display');
+                    const detailDisplay = document.getElementById('prod-detail-display');
                     
-                    imgPreview.src = `imagenes/${nombreParaFoto}.jpg`;
-                    nameDisplay.innerText = nombreParaFoto;
+                    imgPreview.src = `imagenes/${nombreFoto}.jpg`;
+                    nameDisplay.innerText = nombreFoto;
+                    detailDisplay.innerHTML = `
+                        <b>Modelo:</b> ${item.modelo || '-'} <br>
+                        <b>No. Parte:</b> ${item.noParte || '-'} <br>
+                        <b>Ubicación:</b> ${item.ubicacion || '-'}
+                    `;
                     
                     imgPreview.onerror = () => { imgPreview.src = 'imagenes/sin_foto.jpg'; };
                 };
@@ -214,7 +227,7 @@
                 carrito.map((item, i) => `
                     <div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding:3px 0;">
                         <span style="font-size:11px;">${item.nombre} (<b>${item.cOut}</b>)</span>
-                        <button onclick="carrito.splice(${i},1); dibujarCarrito();" style="border:none; color:red; background:none; cursor:pointer; font-weight:bold;">✕</button>
+                        <button onclick="carrito.splice(${i},1); dibujarCarrito();" style="border:none; color:red; background:none; cursor:pointer;">✕</button>
                     </div>
                 `).join('');
         }
@@ -230,14 +243,8 @@
                     document.getElementById('f-alm').innerText = user.usuario;
                     document.getElementById('f-rec').innerText = r;
                     document.getElementById('f-pro').innerText = py;
-                    
                     document.getElementById('f-lista').innerHTML = carrito.map(i => `
-                        <tr>
-                            <td class="pzas-col">${i.cOut} PZAS</td>
-                            <td>${i.modelo || '-'}</td>
-                            <td>${i.noParte || '-'}</td>
-                            <td>${i.nombre}</td>
-                        </tr>
+                        <tr><td class="pzas-col">${i.cOut} PZAS</td><td>${i.modelo || '-'}</td><td>${i.noParte || '-'}</td><td>${i.nombre}</td></tr>
                     `).join('');
 
                     for (const item of carrito) {
@@ -254,9 +261,7 @@
         document.getElementById('mainSearch').oninput = (e) => {
             const t = e.target.value.toLowerCase();
             renderTable(productos.filter(p => 
-                (p.nombre||'').toLowerCase().includes(t) || 
-                (p.modelo||'').toLowerCase().includes(t) || 
-                (p.noParte||'').toLowerCase().includes(t)
+                (p.nombre||'').toLowerCase().includes(t) || (p.modelo||'').toLowerCase().includes(t) || (p.noParte||'').toLowerCase().includes(t)
             ));
         };
     </script>
