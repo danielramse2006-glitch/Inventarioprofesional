@@ -1,44 +1,60 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8"><title>Página Principal - Inventario</title>
+    <meta charset="UTF-8"><title>Inventario - Control de Salidas</title>
     <link rel="stylesheet" href="style.css">
+    
+    <style>
+        /* Solo añadimos lo que NO está en tu style.css */
+        .cart-container { background: #fff; color: #333; padding: 10px; border-radius: 5px; margin-top: 15px; border: 1px solid #ccc; font-size: 0.85em; }
+        .cart-item { border-bottom: 1px solid #eee; padding: 5px 0; display: flex; justify-content: space-between; align-items: center; }
+        .btn-add { background: #27ae60; color: white; border: none; border-radius: 3px; cursor: pointer; padding: 4px 8px; font-weight: bold; }
+        .btn-confirm { width: 100%; background: #e67e22; color: white; border: none; padding: 10px; cursor: pointer; border-radius: 4px; font-weight: bold; margin-top: 10px; }
+        
+        #print-vale { display: none; }
+        @media print {
+            body * { visibility: hidden; }
+            #print-vale, #print-vale * { visibility: visible; }
+            #print-vale { display: block; position: absolute; left: 0; top: 0; width: 100%; color: black; padding: 40px; }
+            .table-print { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            .table-print th, .table-print td { border: 1px solid #000; padding: 10px; text-align: left; }
+        }
+    </style>
 </head>
-<body class="bg-blue">
-    <header><h1>Página Principal</h1></header>
+<body class="bg-blue"> <header><h1>Página Principal</h1></header>
     
     <div class="main-container">
-        <nav class="side-menu">
-            <button onclick="location.href='registro.html'">Registrar</button>
+        <nav class="side-menu"> <button onclick="location.href='registro.html'">Registrar</button>
             <button onclick="location.href='actualizar.html'">Actualizar</button>
             <button onclick="location.href='eliminar.html'">Eliminar</button>
             <button id="navAdmin" style="display:none; background:#f1c40f;" onclick="location.href='usuarios.html'">Administrar Usuarios</button>
-            <button>Imprimir Código de Barras</button>
+            
+            <div class="cart-container">
+                <h4 style="margin:0 0 10px 0; color:black;">📦 VALE DE SALIDA</h4>
+                <div id="cart-content" style="color:black;"><i>Sin productos</i></div>
+                <hr>
+                <input type="text" id="destinatario" placeholder="Destinatario" style="width:90%; margin-bottom:5px;">
+                <input type="text" id="proyecto" placeholder="Proyecto" style="width:90%;">
+                <button class="btn-confirm" onclick="confirmarSalida()">DESCONTAR Y PDF</button>
+            </div>
         </nav>
 
         <section class="content">
             <div style="margin-bottom:15px;">
-                <input type="text" id="mainSearch" placeholder="Buscar por No. Parte, Modelo o Nombre..." style="width:100%; padding:12px; border-radius:5px; border:1px solid #ccc;">
+                <input type="text" id="mainSearch" placeholder="Buscar producto..." style="width:100%; padding:12px; border-radius:5px; border:1px solid #ccc;">
             </div>
 
             <div class="table-wrapper">
                 <table id="tabla-prod">
                     <thead>
                         <tr>
-                            <th>Modelo</th>
+                            <th>Añadir</th> <th>Modelo</th>
                             <th>No. Parte</th>
                             <th>Nombre</th>
                             <th>Descripción</th>
                             <th>Cantidad</th>
                             <th>Costo</th>
-                            <th>Consumible</th>
-                            <th>Tipo</th>
-                            <th>Área</th>
-                            <th>Estante</th>
-                            <th>Contenedor</th>
-                            <th>Lote</th>
-                            <th>Presentación</th>
-                            <th>Observaciones</th>
+                            <th>Ubicación</th>
                         </tr>
                     </thead>
                     <tbody id="inventory-body"></tbody>
@@ -46,82 +62,130 @@
             </div>
 
             <div id="image-preview-container">
-                <h3 id="preview-title" style="margin-bottom:15px; color: #555;">Pasa el mouse sobre un producto para ver su imagen</h3>
+                <h3 id="preview-title">Pasa el mouse para ver imagen</h3>
                 <img id="main-preview-img" src="imagenes/sin_foto.jpg" alt="Previsualización">
             </div>
         </section>
     </div>
 
+    <div id="print-vale">
+        <h1 style="text-align:center;">VALE DE SALIDA DE ALMACÉN</h1>
+        <p><strong>Fecha:</strong> <span id="f-fecha"></span> | <strong>Entrega:</strong> <span id="f-autor"></span></p>
+        <p><strong>Proyecto:</strong> <span id="f-proyecto"></span> | <strong>Recibe:</strong> <span id="f-destino"></span></p>
+        <table class="table-print">
+            <thead>
+                <tr><th>Modelo</th><th>No. Parte</th><th>Nombre</th><th>Cant.</th></tr>
+            </thead>
+            <tbody id="f-cuerpo"></tbody>
+        </table>
+        <div style="margin-top:80px; display:flex; justify-content:space-around;">
+            <p>___________________<br>Firma Entrega</p>
+            <p>___________________<br>Firma Recibe</p>
+        </div>
+    </div>
+
     <button class="btn-exit" onclick="sessionStorage.clear(); location.href='login.html'">Salir</button>
 
     <script type="module">
+        // IMPORTAMOS DESDE TU CONFIG.JS ORIGINAL
         import { db, checkAuth } from './config.js';
-        import { collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { collection, onSnapshot, doc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         
         const user = checkAuth();
         if(user && user.usuario === 'admin') document.getElementById('navAdmin').style.display = 'block';
 
         let productos = [];
+        let carrito = [];
 
-        // Escuchar Firebase
+        // Leer datos y guardar el ID para poder restar después
         onSnapshot(collection(db, "productos"), (snap) => {
             productos = [];
-            snap.forEach(doc => { productos.push(doc.data()); });
+            snap.forEach(d => { productos.push({...d.data(), id: d.id}); });
             renderTable(productos);
         });
 
         function renderTable(lista) {
             const tbody = document.getElementById('inventory-body');
             tbody.innerHTML = '';
-            
             lista.forEach(p => {
                 const tr = document.createElement('tr');
-
-                // LÓGICA DE IMAGEN POR NOMBRE AL PASAR EL MOUSE (Hover)
                 tr.onmouseenter = () => {
-                    const nombreParaFoto = (p.nombre || "sin_nombre").trim();
-                    const imgPreview = document.getElementById('main-preview-img');
-                    const titlePreview = document.getElementById('preview-title');
-                    
-                    // Busca la imagen basada en el NOMBRE (ej: Esp 32.jpg)
-                    imgPreview.src = `imagenes/${nombreParaFoto}.jpg`;
-                    titlePreview.innerText = `Producto: ${nombreParaFoto}`;
-                    
-                    // Si no existe, pone la imagen por defecto
-                    imgPreview.onerror = () => { 
-                        imgPreview.src = 'imagenes/sin_foto.jpg'; 
-                    };
+                    const img = document.getElementById('main-preview-img');
+                    img.src = `imagenes/${(p.nombre || "sin_nombre").trim()}.jpg`;
+                    img.onerror = () => img.src = 'imagenes/sin_foto.jpg';
                 };
-
                 tr.innerHTML = `
+                    <td><button class="btn-add" onclick="addToCart('${p.id}')">＋</button></td>
                     <td>${p.modelo || '-'}</td>
-                    <td style="font-weight:bold; color:#0056b3;">${p.noParte || '-'}</td>
+                    <td>${p.noParte || '-'}</td>
                     <td>${p.nombre || '-'}</td>
                     <td>${p.descripcion || '-'}</td>
-                    <td>${p.cantidad || 0}</td>
+                    <td style="font-weight:bold;">${p.cantidad || 0}</td>
                     <td>$${p.costo || 0}</td>
-                    <td>${p.consumible || '-'}</td>
-                    <td>${p.tipo || '-'}</td>
                     <td>${p.ubicacion || '-'}</td>
-                    <td>${p.estante || '-'}</td>
-                    <td>${p.contenedor || '-'}</td>
-                    <td>${p.lote || '-'}</td>
-                    <td>${p.presentacion || '-'}</td>
-                    <td>${p.observaciones || '-'}</td>
                 `;
                 tbody.appendChild(tr);
             });
         }
 
-        // Buscador
+        window.addToCart = (id) => {
+            const prod = productos.find(p => p.id === id);
+            const enCarro = carrito.find(item => item.id === id);
+            if(enCarro) {
+                if(enCarro.cantidadSalida + 1 > prod.cantidad) return alert("No hay más stock");
+                enCarro.cantidadSalida++;
+            } else {
+                if(prod.cantidad < 1) return alert("Producto agotado");
+                carrito.push({...prod, cantidadSalida: 1});
+            }
+            updateCartUI();
+        };
+
+        function updateCartUI() {
+            const container = document.getElementById('cart-content');
+            container.innerHTML = carrito.length === 0 ? '<i>Sin productos</i>' : 
+                carrito.map((item, i) => `
+                    <div class="cart-item">
+                        <span>${item.nombre} (x${item.cantidadSalida})</span>
+                        <button onclick="removeItem(${i})" style="color:red; border:none; background:none; cursor:pointer;">✕</button>
+                    </div>
+                `).join('');
+        }
+
+        window.removeItem = (i) => { carrito.splice(i, 1); updateCartUI(); };
+
+        // ESTA ES LA FUNCIÓN QUE RESTA LAS UNIDADES EN FIREBASE
+        window.confirmarSalida = async () => {
+            const dest = document.getElementById('destinatario').value;
+            const proy = document.getElementById('proyecto').value;
+            if(!dest || !proy || carrito.length === 0) return alert("Completa los datos y el carrito.");
+
+            if(confirm("¿Confirmar salida? Se restarán las piezas del inventario.")) {
+                try {
+                    for (const item of carrito) {
+                        const ref = doc(db, "productos", item.id);
+                        await updateDoc(ref, { cantidad: increment(-item.cantidadSalida) });
+                    }
+
+                    // Preparar y disparar impresión
+                    document.getElementById('f-fecha').innerText = new Date().toLocaleDateString();
+                    document.getElementById('f-autor').innerText = user.usuario;
+                    document.getElementById('f-proyecto').innerText = proy;
+                    document.getElementById('f-destino').innerText = dest;
+                    document.getElementById('f-cuerpo').innerHTML = carrito.map(i => `
+                        <tr><td>${i.modelo}</td><td>${i.noParte}</td><td>${i.nombre}</td><td>${i.cantidadSalida}</td></tr>
+                    `).join('');
+
+                    window.print();
+                    carrito = []; updateCartUI();
+                    alert("Inventario actualizado y vale generado.");
+                } catch (e) { alert("Error al actualizar"); }
+            }
+        };
+
         document.getElementById('mainSearch').addEventListener('input', (e) => {
             const term = e.target.value.toLowerCase();
-            const filtrados = productos.filter(p => 
-                (p.noParte || '').toLowerCase().includes(term) ||
-                (p.modelo || '').toLowerCase().includes(term) ||
-                (p.nombre || '').toLowerCase().includes(term)
-            );
-            renderTable(filtrados);
+            renderTable(productos.filter(p => (p.nombre || '').toLowerCase().includes(term) || (p.noParte || '').toLowerCase().includes(term)));
         });
     </script>
 </body>
