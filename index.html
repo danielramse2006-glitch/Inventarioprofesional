@@ -8,6 +8,24 @@
         .btn-add-item { background: #27ae60; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-weight: bold; }
         .btn-logout { background: #c0392b !important; color: white !important; margin-top: auto; }
         
+        /* Estilos del Visor de Imagen */
+        #image-preview-container {
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        #main-preview-img {
+            max-width: 100%;
+            max-height: 250px;
+            border-radius: 5px;
+            margin-top: 10px;
+            border: 1px solid #ddd;
+        }
+
         /* Estilos de impresión del Vale */
         #print-vale { display: none; }
         @media print {
@@ -36,6 +54,11 @@
                 <input type="text" id="recep" placeholder="¿Quién recibe?" style="width:90%; margin-bottom:5px;">
                 <input type="text" id="proyec" placeholder="Proyecto/Orden" style="width:90%;">
                 <button onclick="procesarSalida()" style="width:100%; background:#e67e22; color:white; border:none; padding:10px; margin-top:10px; font-weight:bold; cursor:pointer; border-radius:4px;">GENERAR VALE</button>
+            </div>
+
+            <div id="image-preview-container">
+                <p id="preview-title" style="margin:0; font-size: 0.85em; color: #666; font-weight: bold;">Previsualización</p>
+                <img id="main-preview-img" src="imagenes/sin_foto.jpg" alt="Vista previa">
             </div>
 
             <button class="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button>
@@ -101,8 +124,11 @@
 
         const puedeHacerSalidas = (user.usuario === 'admin' || p.salidas);
 
+        // Control de visibilidad de botones por permiso
         if(user.usuario === 'admin') {
-            document.querySelectorAll('.side-menu button, .cart-box').forEach(el => el.style.display = 'block');
+            document.querySelectorAll('.side-menu button, .cart-box').forEach(el => {
+                if(!el.classList.contains('btn-logout')) el.style.display = 'block';
+            });
             document.getElementById('th-plus').style.display = 'table-cell';
         } else {
             if(p.registrar) document.getElementById('navReg').style.display = 'block';
@@ -125,12 +151,25 @@
             tbody.innerHTML = '';
             lista.forEach(item => {
                 const tr = document.createElement('tr');
+
+                // LÓGICA DE VISOR DE IMAGEN (Hover)
+                tr.onmouseenter = () => {
+                    const nombreParaFoto = (item.nombre || "sin_nombre").trim();
+                    const imgPreview = document.getElementById('main-preview-img');
+                    const titlePreview = document.getElementById('preview-title');
+                    
+                    imgPreview.src = `imagenes/${nombreParaFoto}.jpg`;
+                    titlePreview.innerText = nombreParaFoto;
+                    
+                    imgPreview.onerror = () => { imgPreview.src = 'imagenes/sin_foto.jpg'; };
+                };
+
                 tr.innerHTML = `
                     <td style="display:${puedeHacerSalidas ? 'table-cell' : 'none'}">
                         <button class="btn-add-item" onclick="agregar('${item.id}')">＋</button>
                     </td>
                     <td>${item.modelo || '-'}</td>
-                    <td style="font-weight:bold;">${item.noParte || '-'}</td>
+                    <td style="font-weight:bold; color:#0056b3;">${item.noParte || '-'}</td>
                     <td>${item.nombre || '-'}</td>
                     <td style="text-align:center;"><b>${item.cantidad || 0}</b></td>
                     <td>${item.ubicacion || '-'}</td>
@@ -157,8 +196,8 @@
             box.innerHTML = carrito.length === 0 ? '<i>Vacío</i>' : 
                 carrito.map((item, i) => `
                     <div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding:3px 0;">
-                        <span>${item.nombre} (<b>${item.cOut}</b>)</span>
-                        <button onclick="carrito.splice(${i},1); dibujarCarrito();" style="border:none; color:red; background:none; cursor:pointer;">✕</button>
+                        <span style="font-size:11px;">${item.nombre} (<b>${item.cOut}</b>)</span>
+                        <button onclick="carrito.splice(${i},1); dibujarCarrito();" style="border:none; color:red; background:none; cursor:pointer; font-weight:bold;">✕</button>
                     </div>
                 `).join('');
         }
@@ -175,7 +214,6 @@
                     document.getElementById('f-rec').innerText = r;
                     document.getElementById('f-pro').innerText = py;
                     
-                    // Cuerpo del PDF con Modelo y No. Parte
                     document.getElementById('f-lista').innerHTML = carrito.map(i => `
                         <tr>
                             <td class="pzas-col">${i.cOut} PZAS</td>
