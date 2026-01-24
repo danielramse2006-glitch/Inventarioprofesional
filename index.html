@@ -8,22 +8,39 @@
         .btn-add-item { background: #27ae60; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-weight: bold; }
         .btn-logout { background: #c0392b !important; color: white !important; margin-top: auto; }
         
-        /* Estilos del Visor de Imagen */
+        /* --- VISOR DE IMAGEN MEJORADO (MÁS GRANDE) --- */
         #image-preview-container {
             margin-top: 20px;
-            padding: 15px;
+            padding: 10px;
             background: white;
-            border-radius: 8px;
-            border: 1px solid #ccc;
+            border-radius: 10px;
+            border: 2px solid #3498db; /* Borde azul para resaltar */
             text-align: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            overflow: hidden;
         }
+
         #main-preview-img {
-            max-width: 100%;
-            max-height: 250px;
+            width: 100%;
+            max-height: 450px; /* Tamaño aumentado */
+            object-fit: contain; /* Para que no se deforme */
             border-radius: 5px;
-            margin-top: 10px;
-            border: 1px solid #ddd;
+            margin-top: 8px;
+            transition: transform 0.3s ease; /* Efecto suave */
+        }
+
+        #image-preview-container:hover #main-preview-img {
+            transform: scale(1.05); /* Zoom ligero al pasar sobre el cuadro */
+        }
+
+        #preview-title {
+            background: #3498db;
+            color: white;
+            padding: 8px;
+            margin: -10px -10px 10px -10px;
+            font-size: 0.9em;
+            font-weight: bold;
+            text-transform: uppercase;
         }
 
         /* Estilos de impresión del Vale */
@@ -57,8 +74,9 @@
             </div>
 
             <div id="image-preview-container">
-                <p id="preview-title" style="margin:0; font-size: 0.85em; color: #666; font-weight: bold;">Previsualización</p>
+                <div id="preview-title">Vista del Producto</div>
                 <img id="main-preview-img" src="imagenes/sin_foto.jpg" alt="Vista previa">
+                <p id="prod-name-display" style="color: #333; font-size: 0.8em; margin-top: 5px; font-weight: bold;">-</p>
             </div>
 
             <button class="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button>
@@ -124,7 +142,6 @@
 
         const puedeHacerSalidas = (user.usuario === 'admin' || p.salidas);
 
-        // Control de visibilidad de botones por permiso
         if(user.usuario === 'admin') {
             document.querySelectorAll('.side-menu button, .cart-box').forEach(el => {
                 if(!el.classList.contains('btn-logout')) el.style.display = 'block';
@@ -156,10 +173,10 @@
                 tr.onmouseenter = () => {
                     const nombreParaFoto = (item.nombre || "sin_nombre").trim();
                     const imgPreview = document.getElementById('main-preview-img');
-                    const titlePreview = document.getElementById('preview-title');
+                    const nameDisplay = document.getElementById('prod-name-display');
                     
                     imgPreview.src = `imagenes/${nombreParaFoto}.jpg`;
-                    titlePreview.innerText = nombreParaFoto;
+                    nameDisplay.innerText = nombreParaFoto;
                     
                     imgPreview.onerror = () => { imgPreview.src = 'imagenes/sin_foto.jpg'; };
                 };
