@@ -110,7 +110,7 @@
                 <div class="preview-info-box">
                     <p style="text-transform: uppercase; font-size: 0.8em; font-weight: bold; color: #7f8c8d; margin-bottom: 5px;">Detalles del Producto seleccionado:</p>
                     <h2 id="prod-name-display">Selecciona un producto</h2>
-                    <p id="prod-detail-display" style="font-size: 1.1em; line-height: 1.5;">Pasa el mouse sobre la tabla para ver la imagen en alta resolución.</p>
+                    <p id="prod-detail-display" style="font-size: 1.1em; line-height: 1.5;">Haz clic en un producto de la tabla para ver su información y fotografía.</p>
                 </div>
             </div>
         </section>
@@ -159,7 +159,6 @@
         const puedeHacerSalidas = (user.usuario === 'admin' || p.salidas);
         const puedeSubirImg = (user.usuario === 'admin' || p.subirImagenes);
 
-        // Control de menú lateral
         if(user.usuario === 'admin') {
             document.querySelectorAll('.side-menu button, .cart-box').forEach(el => {
                 if(!el.classList.contains('btn-logout')) el.style.display = 'block';
@@ -175,7 +174,6 @@
             }
         }
 
-        // Mostrar u ocultar cuadro de subida a Drive
         if(puedeSubirImg) document.getElementById('upload-box-drive').style.display = 'flex';
 
         onSnapshot(collection(db, "productos"), (snap) => {
@@ -190,13 +188,18 @@
             lista.forEach(item => {
                 const tr = document.createElement('tr');
 
-                tr.onmouseenter = async () => {
+                // CAMBIO A EVENTO CLICK
+                tr.onclick = async () => {
                     const nombreFoto = (item.nombre || "sin_nombre").trim();
                     const imgPreview = document.getElementById('main-preview-img');
                     const nameDisplay = document.getElementById('prod-name-display');
                     const detailDisplay = document.getElementById('prod-detail-display');
                     const statusFoto = document.getElementById('status-foto');
                     
+                    // Resaltado visual de fila seleccionada
+                    document.querySelectorAll('#inventory-body tr').forEach(r => r.style.background = "");
+                    tr.style.background = "#e3f2fd";
+
                     nameDisplay.innerText = nombreFoto;
                     detailDisplay.innerHTML = `
                         <b>Modelo:</b> ${item.modelo || '-'} <br>
@@ -211,7 +214,7 @@
                         const response = await fetch(`${scriptURL}?itemName=${encodeURIComponent(nombreFoto)}`);
                         const data = await response.json();
                         if(data.result === "success" && data.id) {
-                            imgPreview.src = `https://lh3.googleusercontent.com/d/${data.id}`;
+                            imgPreview.src = `https://lh3.googleusercontent.com/u/0/d/${data.id}`;
                             statusFoto.innerText = "Cargada desde Google Drive";
                         } else {
                             imgPreview.src = `imagenes/${nombreFoto}.jpg`;
@@ -228,7 +231,7 @@
 
                 tr.innerHTML = `
                     <td style="display:${puedeHacerSalidas ? 'table-cell' : 'none'}">
-                        <button class="btn-add-item" onclick="agregar('${item.id}')">＋</button>
+                        <button class="btn-add-item" onclick="event.stopPropagation(); agregar('${item.id}')">＋</button>
                     </td>
                     <td>${item.modelo || '-'}</td>
                     <td style="font-weight:bold; color:#0056b3;">${item.noParte || '-'}</td>
@@ -249,7 +252,9 @@
             reader.readAsDataURL(file);
             reader.onload = async () => {
                 const base64 = reader.result.split(',')[1];
-                document.getElementById('btnSubirDrive').innerText = "Subiendo...";
+                const btn = document.getElementById('btnSubirDrive');
+                btn.innerText = "Subiendo...";
+                btn.disabled = true;
                 try {
                     const res = await fetch(scriptURL, {
                         method: "POST",
@@ -258,10 +263,11 @@
                     const data = await res.json();
                     if(data.result === "success") {
                         alert("Foto actualizada en Drive");
-                        document.getElementById('main-preview-img').src = `https://lh3.googleusercontent.com/d/${data.id}`;
+                        document.getElementById('main-preview-img').src = `https://lh3.googleusercontent.com/u/0/d/${data.id}`;
                     }
                 } catch(e) { alert("Error al subir"); }
-                document.getElementById('btnSubirDrive').innerText = "ACTUALIZAR EN DRIVE";
+                btn.innerText = "ACTUALIZAR EN DRIVE";
+                btn.disabled = false;
             };
         }
 
