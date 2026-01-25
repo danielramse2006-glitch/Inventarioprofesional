@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>Master Track - Index</title>
+    <meta charset="UTF-8"><title>Inventario - Panel Principal</title>
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
     <style>
-        /* --- ESTILOS DEL VISOR INFERIOR GIGANTE --- */
+        .cart-box { background: #fff; color: #333; padding: 12px; border-radius: 6px; margin-top: 15px; border: 1px solid #ccc; display: none; }
+        .btn-add-item { background: #27ae60; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-weight: bold; }
+        .btn-logout { background: #c0392b !important; color: white !important; margin-top: auto; }
+        
+        /* --- NUEVO VISOR INFERIOR GIGANTE --- */
         .bottom-preview {
             margin-top: 20px;
             background: white;
@@ -20,13 +22,14 @@
         }
 
         .preview-image-box {
-            flex: 0 0 300px;
+            flex: 1;
             text-align: center;
+            max-height: 500px;
         }
 
         #main-preview-img {
             max-width: 100%;
-            max-height: 350px; 
+            max-height: 480px; /* Altura máxima considerable */
             object-fit: contain;
             border-radius: 8px;
             border: 1px solid #eee;
@@ -44,29 +47,50 @@
             display: inline-block;
         }
 
-        /* Ajuste de scroll para la tabla */
-        .table-wrapper {
-            max-height: 400px;
-            overflow-y: auto;
-            border: 1px solid #ddd;
+        /* Estilos de impresión */
+        #print-vale { display: none; }
+        @media print {
+            body * { visibility: hidden; }
+            #print-vale, #print-vale * { visibility: visible; }
+            #print-vale { display: block; position: absolute; left: 0; top: 0; width: 100%; padding: 40px; color: black; }
+            .vale-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
+            .vale-table th, .vale-table td { border: 1px solid #000; padding: 8px; text-align: left; }
+            .pzas-col { background: #eee !important; font-weight: bold; text-align: center; width: 80px; }
         }
     </style>
 </head>
 <body class="bg-blue">
-    <header><h1>PPAP Master Track System</h1></header>
+    <header><h1>Control de Inventario</h1></header>
+    
     <div class="main-container">
         <nav class="side-menu">
-            <button onclick="location.href='registro.html'">Registrar</button>
-            <button onclick="location.href='actualizar.html'">Actualizar</button>
-            <button onclick="location.href='eliminar.html'">Eliminar</button>
-            <button id="btnSalir" style="background: #c0392b; color: white; margin-top: 20px; border:none; cursor:pointer; padding:14px; border-radius:8px;">CERRAR SESIÓN</button>
-        </nav>
-        <section class="content" style="flex:1; display: flex; flex-direction: column;">
-            <input type="text" id="mainSearch" placeholder="Buscar por Item # o No. Parte..." style="width:100%; padding:12px; margin-bottom:15px; border-radius:5px; border:none;">
+            <button id="navReg" style="display:none;" onclick="location.href='registro.html'">Registrar</button>
+            <button id="navAct" style="display:none;" onclick="location.href='actualizar.html'">Actualizar</button>
+            <button id="navEli" style="display:none;" onclick="location.href='eliminar.html'">Eliminar</button>
+            <button id="navAdm" style="display:none; background:#f1c40f;" onclick="location.href='usuarios.html'">Usuarios</button>
             
-            <div class="table-wrapper">
-                <table id="tabla-prod">
-                    <thead><tr id="table-head"></tr></thead>
+            <div id="cart-box" class="cart-box">
+                <h4 style="margin:0; text-align:center;">📋 VALE DE SALIDA</h4>
+                <div id="cart-list" style="margin: 10px 0; font-size: 0.9em;"><i>Vacío</i></div>
+                <input type="text" id="recep" placeholder="¿Quién recibe?" style="width:90%; margin-bottom:5px;">
+                <input type="text" id="proyec" placeholder="Proyecto/Orden" style="width:90%;">
+                <button onclick="procesarSalida()" style="width:100%; background:#e67e22; color:white; border:none; padding:10px; margin-top:10px; font-weight:bold; cursor:pointer; border-radius:4px;">GENERAR VALE</button>
+            </div>
+
+            <button class="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button>
+        </nav>
+
+        <section class="content" style="flex:1; display: flex; flex-direction: column;">
+            <input type="text" id="mainSearch" placeholder="Buscar por modelo, nombre o no. parte..." style="width:100%; padding:12px; margin-bottom:15px; border-radius:5px; border:none;">
+            
+            <div class="table-wrapper" style="max-height: 400px;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th id="th-plus" style="display:none;">+</th>
+                            <th>Modelo</th><th>No. Parte</th><th>Nombre</th><th>Stock</th><th>Ubicación</th>
+                        </tr>
+                    </thead>
                     <tbody id="inventory-body"></tbody>
                 </table>
             </div>
@@ -76,152 +100,169 @@
                     <img id="main-preview-img" src="imagenes/sin_foto.jpg" alt="Vista previa">
                 </div>
                 <div class="preview-info-box">
-                    <p style="text-transform: uppercase; font-size: 0.8em; font-weight: bold; color: #7f8c8d; margin-bottom: 5px;">Detalles del registro seleccionado:</p>
-                    <h2 id="prod-name-display">Selecciona un registro</h2>
-                    <p id="prod-detail-display" style="font-size: 1.1em; line-height: 1.5;">Pasa el mouse sobre la tabla para ver la imagen y detalles rápidos.</p>
+                    <p style="text-transform: uppercase; font-size: 0.8em; font-weight: bold; color: #7f8c8d; margin-bottom: 5px;">Detalles del Producto seleccionado:</p>
+                    <h2 id="prod-name-display">Selecciona un producto</h2>
+                    <p id="prod-detail-display" style="font-size: 1.1em; line-height: 1.5;">Pasa el mouse sobre la tabla para ver la imagen en alta resolución.</p>
                 </div>
             </div>
         </section>
     </div>
 
-    <div id="modalReporte" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:9999; overflow-y:auto;">
-        <div style="background:white; width:95%; max-width:900px; margin:20px auto; padding:30px; border-radius:10px;">
-            <div id="reporte-print-area" style="padding:10px; background:white; color: black !important; font-family: Arial, sans-serif;">
-                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:3px solid #2c3e50; padding-bottom:10px; margin-bottom:20px;">
-                    <h2 style="margin:0; color:#2c3e50;">REPORTE TÉCNICO PPAP</h2>
-                    <span style="font-weight:bold; color:#7f8c8d;">MASTER TRACK SYSTEM</span>
-                </div>
-                <div style="display:flex; gap:25px; margin-bottom:20px;">
-                    <div style="flex:0 0 250px;">
-                        <img id="rep-img" crossorigin="anonymous" style="width:100%; height:250px; object-fit:contain; border:1px solid #dee2e6; border-radius:5px; background:#f8f9fa;">
-                    </div>
-                    <div style="flex:1;">
-                        <h4 style="background:#2c3e50; color:white; padding:8px; margin:0 0 10px 0; border-radius:3px;">INFORMACIÓN GENERAL</h4>
-                        <div id="rep-data-main" style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; font-size:12px;"></div>
-                    </div>
-                </div>
-                <h4 style="background:#2c3e50; color:white; padding:8px; margin:20px 0 10px 0; border-radius:3px;">ESTADO DE DOCUMENTACIÓN Y VALIDACIÓN</h4>
-                <div id="rep-data-ppap" style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; font-size:10px;"></div>
-            </div>
-            <div style="display:flex; gap:15px; margin-top:30px; border-top:1px solid #eee; padding-top:20px;">
-                <button id="btnDescargarPDF" style="flex:2; padding:15px; background:#2980b9; color:white; font-weight:bold; border:none; border-radius:8px; cursor:pointer; font-size:16px;">📥 DESCARGAR REPORTE PDF</button>
-                <button onclick="document.getElementById('modalReporte').style.display='none'" style="flex:1; padding:15px; background:#e74c3c; color:white; border:none; border-radius:8px; cursor:pointer;">CERRAR</button>
-            </div>
+    <div id="print-vale">
+        <h1 style="text-align:center;">VALE DE SALIDA DE MATERIAL</h1>
+        <hr>
+        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+            <p><strong>Fecha:</strong> <span id="f-fec"></span></p>
+            <p><strong>Almacenista:</strong> <span id="f-alm"></span></p>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+            <p><strong>Recibe:</strong> <span id="f-rec"></span></p>
+            <p><strong>Proyecto:</strong> <span id="f-pro"></span></p>
+        </div>
+        <table class="vale-table">
+            <thead>
+                <tr>
+                    <th class="pzas-col">CANT.</th>
+                    <th>MODELO</th>
+                    <th>NO. PARTE</th>
+                    <th>DESCRIPCIÓN / NOMBRE</th>
+                </tr>
+            </thead>
+            <tbody id="f-lista"></tbody>
+        </table>
+        <div style="margin-top:100px; display:flex; justify-content:space-around;">
+            <p style="border-top:1px solid #000; width:220px; text-align:center; padding-top:5px;">Firma Almacén (Entrega)</p>
+            <p style="border-top:1px solid #000; width:220px; text-align:center; padding-top:5px;">Firma Responsable (Recibe)</p>
         </div>
     </div>
 
     <script type="module">
         import { db, checkAuth } from './config.js';
-        import { collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-        const user = checkAuth();
-        if(!user) throw new Error("Acceso denegado");
-
-        const campos = ["Item #","Estatus","Programador","PPAP Part Number","Component Description","Razon de Cambio","PRP5/area","Lider de Calidad"," OE/AFTERMARKET ","Se entrego documentacion","Muestras Recibidas","Ubicacion Fisica ","Fecha de Programacion","Proceso","Update","Comments","Responsable","Instrucciones Especiales","PPAP Type OE / SM AFTER Market","PV Result","1-Design records","2-ECN document","3-Customer eng approval","4-Design FMEA","5-Process Flow Diagram","6-PFMEA","7-Control Plan","8-MSA Studies","9-Dimensional results","10-Material, performance test result","11-Initial Process Studies","12-Qualify Lab Documentation","13-Appereance Approval Report","14-Sample product","15-Checking Aids","16-Record de compliance","17-Bulk material checklist","18-PSW(Full or Interim)","Supplier PPAP package status","Validation run readiness","Samples on hand","Dimension status","FFF review status","AAR review status","PPAP overall status"];
+        import { collection, onSnapshot, doc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         
-        const head = document.getElementById('table-head');
-        campos.forEach(c => head.innerHTML += `<th>${c.toUpperCase()}</th>`);
-        head.innerHTML += `<th>ACCIONES</th>`;
+        const user = checkAuth();
+        const p = user.permisos || {};
+        let productos = [];
+        let carrito = [];
 
-        let productosLocal = [];
+        window.cerrarSesion = () => { sessionStorage.clear(); window.location.href = 'login.html'; };
+
+        const puedeHacerSalidas = (user.usuario === 'admin' || p.salidas);
+
+        if(user.usuario === 'admin') {
+            document.querySelectorAll('.side-menu button, .cart-box').forEach(el => {
+                if(!el.classList.contains('btn-logout')) el.style.display = 'block';
+            });
+            document.getElementById('th-plus').style.display = 'table-cell';
+        } else {
+            if(p.registrar) document.getElementById('navReg').style.display = 'block';
+            if(p.actualizar) document.getElementById('navAct').style.display = 'block';
+            if(p.eliminar) document.getElementById('navEli').style.display = 'block';
+            if(puedeHacerSalidas) {
+                document.getElementById('cart-box').style.display = 'block';
+                document.getElementById('th-plus').style.display = 'table-cell';
+            }
+        }
 
         onSnapshot(collection(db, "productos"), (snap) => {
-            productosLocal = [];
-            snap.forEach(doc => productosLocal.push(doc.data()));
-            renderTable(productosLocal);
+            productos = [];
+            snap.forEach(d => productos.push({...d.data(), id: d.id}));
+            renderTable(productos);
         });
 
         function renderTable(lista) {
             const tbody = document.getElementById('inventory-body');
             tbody.innerHTML = '';
-            lista.forEach(p => {
+            lista.forEach(item => {
                 const tr = document.createElement('tr');
-                
-                // EVENTO MOUSE ENTER PARA EL VISOR
+
+                // Lógica de Visor Gigante al pasar el mouse
                 tr.onmouseenter = () => {
-                    const itemID = p["Item #"] || "sin_id";
+                    const nombreFoto = (item.nombre || "sin_nombre").trim();
                     const imgPreview = document.getElementById('main-preview-img');
                     const nameDisplay = document.getElementById('prod-name-display');
                     const detailDisplay = document.getElementById('prod-detail-display');
                     
-                    imgPreview.src = `imagenes/${itemID}.jpg`;
-                    nameDisplay.innerText = `Item: ${itemID}`;
+                    imgPreview.src = `imagenes/${nombreFoto}.jpg`;
+                    nameDisplay.innerText = nombreFoto;
                     detailDisplay.innerHTML = `
-                        <b>Número de Parte:</b> ${p["PPAP Part Number"] || '-'} <br>
-                        <b>Descripción:</b> ${p["Component Description"] || '-'} <br>
-                        <b>Estatus:</b> ${p["Estatus"] || '-'} <br>
-                        <b>Responsable:</b> ${p["Responsable"] || '-'}
+                        <b>Modelo:</b> ${item.modelo || '-'} <br>
+                        <b>No. Parte:</b> ${item.noParte || '-'} <br>
+                        <b>Ubicación:</b> ${item.ubicacion || '-'}
                     `;
+                    
                     imgPreview.onerror = () => { imgPreview.src = 'imagenes/sin_foto.jpg'; };
                 };
 
-                // Llenar datos
-                campos.forEach(c => {
-                    tr.innerHTML += `<td>${p[c] || '-'}</td>`;
-                });
-
-                // Botón reporte
-                const tdBtn = document.createElement('td');
-                const btn = document.createElement('button');
-                btn.innerText = "VER REPORTE";
-                btn.className = "btn-ver";
-                btn.style = "background:#27ae60; color:white; border:none; padding:8px 15px; border-radius:4px; cursor:pointer;";
-                btn.onclick = () => abrirReporte(p);
-                tdBtn.appendChild(btn);
-                tr.appendChild(tdBtn);
-
+                tr.innerHTML = `
+                    <td style="display:${puedeHacerSalidas ? 'table-cell' : 'none'}">
+                        <button class="btn-add-item" onclick="agregar('${item.id}')">＋</button>
+                    </td>
+                    <td>${item.modelo || '-'}</td>
+                    <td style="font-weight:bold; color:#0056b3;">${item.noParte || '-'}</td>
+                    <td>${item.nombre || '-'}</td>
+                    <td style="text-align:center;"><b>${item.cantidad || 0}</b></td>
+                    <td>${item.ubicacion || '-'}</td>
+                `;
                 tbody.appendChild(tr);
             });
         }
 
-        function abrirReporte(p) {
-            const modal = document.getElementById('modalReporte');
-            const img = document.getElementById('rep-img');
-            const rDataMain = document.getElementById('rep-data-main');
-            const rDataPpap = document.getElementById('rep-data-ppap');
-            
-            rDataMain.innerHTML = '';
-            rDataPpap.innerHTML = '';
+        window.agregar = (id) => {
+            const prod = productos.find(x => x.id === id);
+            const enCarro = carrito.find(x => x.id === id);
+            if(enCarro) {
+                if(enCarro.cOut + 1 > prod.cantidad) return alert("Sin stock suficiente");
+                enCarro.cOut++;
+            } else {
+                if(prod.cantidad < 1) return alert("Sin existencias");
+                carrito.push({...prod, cOut: 1});
+            }
+            dibujarCarrito();
+        };
 
-            campos.forEach((key, index) => {
-                const val = p[key] || '-';
-                const itemHtml = `<div style="border-bottom:1px solid #f1f1f1; padding:4px 0;">
-                                    <span style="color:#7f8c8d; font-weight:bold; display:block; font-size:9px; text-transform:uppercase;">${key}</span>
-                                    <span style="color:#2c3e50;">${val}</span>
-                                  </div>`;
-                if(index < 14) rDataMain.innerHTML += itemHtml;
-                else rDataPpap.innerHTML += itemHtml;
-            });
-
-            img.src = `imagenes/${p["Item #"]}.jpg`;
-            img.onerror = () => img.src = 'imagenes/sin_foto.jpg';
-            modal.style.display = 'block';
+        function dibujarCarrito() {
+            const box = document.getElementById('cart-list');
+            box.innerHTML = carrito.length === 0 ? '<i>Vacío</i>' : 
+                carrito.map((item, i) => `
+                    <div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding:3px 0;">
+                        <span style="font-size:11px;">${item.nombre} (<b>${item.cOut}</b>)</span>
+                        <button onclick="carrito.splice(${i},1); dibujarCarrito();" style="border:none; color:red; background:none; cursor:pointer;">✕</button>
+                    </div>
+                `).join('');
         }
 
-        // BUSCADOR
+        window.procesarSalida = async () => {
+            const r = document.getElementById('recep').value.trim();
+            const py = document.getElementById('proyec').value.trim();
+            if(!r || !py || carrito.length === 0) return alert("Faltan datos o productos");
+
+            if(confirm("¿Confirmar salida y generar vale?")) {
+                try {
+                    document.getElementById('f-fec').innerText = new Date().toLocaleDateString();
+                    document.getElementById('f-alm').innerText = user.usuario;
+                    document.getElementById('f-rec').innerText = r;
+                    document.getElementById('f-pro').innerText = py;
+                    document.getElementById('f-lista').innerHTML = carrito.map(i => `
+                        <tr><td class="pzas-col">${i.cOut} PZAS</td><td>${i.modelo || '-'}</td><td>${i.noParte || '-'}</td><td>${i.nombre}</td></tr>
+                    `).join('');
+
+                    for (const item of carrito) {
+                        await updateDoc(doc(db, "productos", item.id), { cantidad: increment(-item.cOut) });
+                    }
+
+                    window.print();
+                    carrito = []; dibujarCarrito();
+                    document.getElementById('recep').value = ''; document.getElementById('proyec').value = '';
+                } catch (e) { alert("Error al procesar"); }
+            }
+        };
+
         document.getElementById('mainSearch').oninput = (e) => {
             const t = e.target.value.toLowerCase();
-            const filtrados = productosLocal.filter(p => 
-                (p["Item #"] || '').toString().toLowerCase().includes(t) || 
-                (p["PPAP Part Number"] || '').toLowerCase().includes(t)
-            );
-            renderTable(filtrados);
-        };
-
-        // PDF Y SALIR
-        document.getElementById('btnDescargarPDF').onclick = function() {
-            const element = document.getElementById('reporte-print-area');
-            html2pdf().set({
-                margin: [10, 10],
-                filename: 'Reporte_PPAP.pdf',
-                html2canvas: { scale: 2, useCORS: true },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            }).from(element).save();
-        };
-
-        document.getElementById('btnSalir').onclick = () => {
-            sessionStorage.clear();
-            window.location.href = "login.html";
+            renderTable(productos.filter(p => 
+                (p.nombre||'').toLowerCase().includes(t) || (p.modelo||'').toLowerCase().includes(t) || (p.noParte||'').toLowerCase().includes(t)
+            ));
         };
     </script>
 </body>
