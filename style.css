@@ -70,8 +70,7 @@ header h1 {
     color: #2c3e50;
 }
 
-/* --- DISEÑO DE FORMULARIOS (LA CUADRÍCULA) --- */
-/* Esto arregla Registro, Actualizar y Eliminar */
+/* --- DISEÑO DE FORMULARIOS --- */
 .grid-form { 
     display: grid; 
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); 
@@ -96,7 +95,7 @@ input, select, textarea {
     border-radius: 5px; 
     font-size: 14px;
     width: 100%;
-    box-sizing: border-box; /* Evita que el input se salga del cuadro */
+    box-sizing: border-box; 
 }
 
 input:focus, textarea:focus {
@@ -105,7 +104,6 @@ input:focus, textarea:focus {
     box-shadow: 0 0 5px rgba(0,128,255,0.3);
 }
 
-/* Checkboxes */
 .tipo-container {
     grid-column: 1 / -1; 
     display: flex;
@@ -117,7 +115,6 @@ input:focus, textarea:focus {
     margin: 10px 0;
 }
 
-/* --- BOTONES DE FORMULARIO --- */
 .form-buttons {
     grid-column: 1 / -1;
     display: flex;
@@ -189,7 +186,6 @@ th {
     margin-top: 10px; 
 }
 
-/* Botón Salir */
 .btn-exit { 
     position: fixed; 
     bottom: 20px; 
