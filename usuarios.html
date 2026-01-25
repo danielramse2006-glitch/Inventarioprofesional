@@ -5,7 +5,6 @@
     <title>Gestión de Usuarios - Inventario</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Estilos específicos para la lista de usuarios que no están en style.css */
         .user-list-section { margin-top: 30px; border-top: 2px solid #ccc; padding-top: 20px; }
         .user-card { 
             background: white; padding: 15px; margin-bottom: 10px; border-radius: 8px;
@@ -43,6 +42,7 @@
                 <label><input type="checkbox" id="pa"> Actualizar Stock</label>
                 <label><input type="checkbox" id="pd"> Eliminar Productos</label>
                 <label style="color:#e67e22; font-weight:bold;"><input type="checkbox" id="ps"> Realizar Salidas (VALES)</label>
+                <label style="color:#3498db; font-weight:bold;"><input type="checkbox" id="psi"> Subir/Cambiar Imágenes (Drive)</label>
             </div>
 
             <button id="btnSave" class="btn-action" style="background: #27ae60; color: white; width: 100%;">CREAR USUARIO</button>
@@ -51,8 +51,7 @@
 
         <div class="user-list-section">
             <h3 style="color:#333;">Usuarios en el Sistema</h3>
-            <div id="user-display">
-                </div>
+            <div id="user-display"></div>
         </div>
     </div>
 
@@ -63,20 +62,22 @@
         const userAdmin = checkAuth();
         if(userAdmin.usuario !== 'admin') window.location.href="index.html";
 
-        // Mostrar usuarios y permitir eliminar
         onSnapshot(collection(db, "usuarios"), (snap) => {
             const display = document.getElementById('user-display');
             display.innerHTML = '';
             snap.forEach(d => {
                 const data = d.data();
-                if(data.usuario === 'admin') return; // El admin maestro no se toca
+                if(data.usuario === 'admin') return;
 
                 const card = document.createElement('div');
                 card.className = 'user-card';
                 card.innerHTML = `
                     <div class="user-info">
                         <b>${data.usuario}</b><br>
-                        <small style="color:gray;">Salidas: ${data.permisos.salidas ? 'SÍ' : 'NO'}</small>
+                        <small style="color:gray;">
+                            Salidas: ${data.permisos.salidas ? 'SÍ' : 'NO'} | 
+                            Fotos: ${data.permisos.subirImagenes ? 'SÍ' : 'NO'}
+                        </small>
                     </div>
                     <button class="btn-delete-user" onclick="eliminarUsuario('${d.id}', '${data.usuario}')">ELIMINAR</button>
                 `;
@@ -84,7 +85,6 @@
             });
         });
 
-        // Guardar nuevo
         document.getElementById('btnSave').onclick = async () => {
             const u = document.getElementById('u').value.trim();
             const p = document.getElementById('p').value.trim();
@@ -96,14 +96,14 @@
                     registrar: document.getElementById('pr').checked,
                     actualizar: document.getElementById('pa').checked,
                     eliminar: document.getElementById('pd').checked,
-                    salidas: document.getElementById('ps').checked
+                    salidas: document.getElementById('ps').checked,
+                    subirImagenes: document.getElementById('psi').checked // GUARDADO
                 }
             });
             alert("Usuario creado");
             location.reload();
         };
 
-        // Función global para eliminar
         window.eliminarUsuario = async (id, nombre) => {
             if(confirm(`¿Deseas eliminar permanentemente a ${nombre}?`)) {
                 await deleteDoc(doc(db, "usuarios", id));
