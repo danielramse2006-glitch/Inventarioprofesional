@@ -8,7 +8,7 @@
         .btn-add-item { background: #27ae60; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-weight: bold; }
         .btn-logout { background: #c0392b !important; color: white !important; margin-top: auto; }
         
-        /* --- NUEVO VISOR INFERIOR GIGANTE --- */
+        /* --- VISOR INFERIOR GIGANTE --- */
         .bottom-preview {
             margin-top: 20px;
             background: white;
@@ -29,7 +29,7 @@
 
         #main-preview-img {
             max-width: 100%;
-            max-height: 480px; /* Altura máxima considerable */
+            max-height: 480px; 
             object-fit: contain;
             border-radius: 8px;
             border: 1px solid #eee;
@@ -46,6 +46,8 @@
             border-bottom: 2px solid #3498db;
             display: inline-block;
         }
+
+        .loading-text { font-size: 11px; color: #3498db; font-style: italic; display: block; margin-bottom: 5px; }
 
         /* Estilos de impresión */
         #print-vale { display: none; }
@@ -97,7 +99,13 @@
 
             <div class="bottom-preview">
                 <div class="preview-image-box">
+                    <span id="status-foto" class="loading-text"></span>
                     <img id="main-preview-img" src="imagenes/sin_foto.jpg" alt="Vista previa">
+                    
+                    <div id="upload-box-drive" style="display:none; margin-top:10px; padding:10px; background:#f1f1f1; border-radius:8px; flex-direction: column; gap: 5px;">
+                        <input type="file" id="fileDrive" accept="image/*" style="font-size:10px; width:100%;">
+                        <button id="btnSubirDrive" style="background:#3498db; color:white; border:none; padding:6px; border-radius:4px; cursor:pointer; font-size:11px; font-weight:bold;">ACTUALIZAR EN DRIVE</button>
+                    </div>
                 </div>
                 <div class="preview-info-box">
                     <p style="text-transform: uppercase; font-size: 0.8em; font-weight: bold; color: #7f8c8d; margin-bottom: 5px;">Detalles del Producto seleccionado:</p>
@@ -144,11 +152,14 @@
         const p = user.permisos || {};
         let productos = [];
         let carrito = [];
+        const scriptURL = "https://script.google.com/macros/s/AKfycbxaEtN66UYbSOO57Wm9HPrjv7IyfzV8Q3cyZgvDKkKcC8PTohwGaLhznjI3AfP2VTLS/exec";
 
         window.cerrarSesion = () => { sessionStorage.clear(); window.location.href = 'login.html'; };
 
         const puedeHacerSalidas = (user.usuario === 'admin' || p.salidas);
+        const puedeSubirImg = (user.usuario === 'admin' || p.subirImagenes);
 
+        // Control de menú lateral
         if(user.usuario === 'admin') {
             document.querySelectorAll('.side-menu button, .cart-box').forEach(el => {
                 if(!el.classList.contains('btn-logout')) el.style.display = 'block';
@@ -164,6 +175,9 @@
             }
         }
 
+        // Mostrar u ocultar cuadro de subida a Drive
+        if(puedeSubirImg) document.getElementById('upload-box-drive').style.display = 'flex';
+
         onSnapshot(collection(db, "productos"), (snap) => {
             productos = [];
             snap.forEach(d => productos.push({...d.data(), id: d.id}));
@@ -176,22 +190,40 @@
             lista.forEach(item => {
                 const tr = document.createElement('tr');
 
-                // Lógica de Visor Gigante al pasar el mouse
-                tr.onmouseenter = () => {
+                tr.onmouseenter = async () => {
                     const nombreFoto = (item.nombre || "sin_nombre").trim();
                     const imgPreview = document.getElementById('main-preview-img');
                     const nameDisplay = document.getElementById('prod-name-display');
                     const detailDisplay = document.getElementById('prod-detail-display');
+                    const statusFoto = document.getElementById('status-foto');
                     
-                    imgPreview.src = `imagenes/${nombreFoto}.jpg`;
                     nameDisplay.innerText = nombreFoto;
                     detailDisplay.innerHTML = `
                         <b>Modelo:</b> ${item.modelo || '-'} <br>
                         <b>No. Parte:</b> ${item.noParte || '-'} <br>
                         <b>Ubicación:</b> ${item.ubicacion || '-'}
                     `;
-                    
-                    imgPreview.onerror = () => { imgPreview.src = 'imagenes/sin_foto.jpg'; };
+
+                    statusFoto.innerText = "Buscando en Drive...";
+                    imgPreview.src = "imagenes/sin_foto.jpg";
+
+                    try {
+                        const response = await fetch(`${scriptURL}?itemName=${encodeURIComponent(nombreFoto)}`);
+                        const data = await response.json();
+                        if(data.result === "success" && data.id) {
+                            imgPreview.src = `https://lh3.googleusercontent.com/d/${data.id}`;
+                            statusFoto.innerText = "Cargada desde Google Drive";
+                        } else {
+                            imgPreview.src = `imagenes/${nombreFoto}.jpg`;
+                            statusFoto.innerText = "Local / Sin foto en Drive";
+                            imgPreview.onerror = () => { imgPreview.src = 'imagenes/sin_foto.jpg'; statusFoto.innerText = ""; };
+                        }
+                    } catch (e) {
+                        imgPreview.src = `imagenes/${nombreFoto}.jpg`;
+                        statusFoto.innerText = "";
+                    }
+
+                    if(puedeSubirImg) document.getElementById('btnSubirDrive').onclick = () => subirADrive(nombreFoto);
                 };
 
                 tr.innerHTML = `
@@ -208,14 +240,39 @@
             });
         }
 
+        async function subirADrive(nombreProducto) {
+            const fileInput = document.getElementById('fileDrive');
+            const file = fileInput.files[0];
+            if(!file) return alert("Selecciona una imagen");
+
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = async () => {
+                const base64 = reader.result.split(',')[1];
+                document.getElementById('btnSubirDrive').innerText = "Subiendo...";
+                try {
+                    const res = await fetch(scriptURL, {
+                        method: "POST",
+                        body: JSON.stringify({ itemName: nombreProducto, imageB64: base64 })
+                    });
+                    const data = await res.json();
+                    if(data.result === "success") {
+                        alert("Foto actualizada en Drive");
+                        document.getElementById('main-preview-img').src = `https://lh3.googleusercontent.com/d/${data.id}`;
+                    }
+                } catch(e) { alert("Error al subir"); }
+                document.getElementById('btnSubirDrive').innerText = "ACTUALIZAR EN DRIVE";
+            };
+        }
+
         window.agregar = (id) => {
             const prod = productos.find(x => x.id === id);
             const enCarro = carrito.find(x => x.id === id);
             if(enCarro) {
-                if(enCarro.cOut + 1 > prod.cantidad) return alert("Sin stock suficiente");
+                if(enCarro.cOut + 1 > prod.cantidad) return alert("Sin stock");
                 enCarro.cOut++;
             } else {
-                if(prod.cantidad < 1) return alert("Sin existencias");
+                if(prod.cantidad < 1) return alert("Sin stock");
                 carrito.push({...prod, cOut: 1});
             }
             dibujarCarrito();
@@ -235,9 +292,9 @@
         window.procesarSalida = async () => {
             const r = document.getElementById('recep').value.trim();
             const py = document.getElementById('proyec').value.trim();
-            if(!r || !py || carrito.length === 0) return alert("Faltan datos o productos");
+            if(!r || !py || carrito.length === 0) return alert("Faltan datos");
 
-            if(confirm("¿Confirmar salida y generar vale?")) {
+            if(confirm("¿Confirmar salida?")) {
                 try {
                     document.getElementById('f-fec').innerText = new Date().toLocaleDateString();
                     document.getElementById('f-alm').innerText = user.usuario;
@@ -254,7 +311,7 @@
                     window.print();
                     carrito = []; dibujarCarrito();
                     document.getElementById('recep').value = ''; document.getElementById('proyec').value = '';
-                } catch (e) { alert("Error al procesar"); }
+                } catch (e) { alert("Error"); }
             }
         };
 
