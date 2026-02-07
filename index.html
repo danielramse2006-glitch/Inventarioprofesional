@@ -111,27 +111,19 @@
             display: flex; 
         }
         
-        .btn-sel, .btn-up { 
-            padding: 8px 15px !important;
-            font-size: 13px !important;
-            border-radius: 5px !important;
-            cursor: pointer;
-            font-weight: bold;
-            border: none;
-        }
-        
-        .btn-sel {
-            background: #7f8c8d !important; 
-            color: white !important;
-        }
-        
-        .btn-up { 
+        .btn-subir-drive { 
             background: #3498db !important; 
             color: white !important;
-            display: none !important; 
+            border: none !important; 
+            padding: 10px 15px !important; 
+            cursor: pointer !important; 
+            font-weight: bold !important;
+            font-size: 14px !important;
+            border-radius: 5px !important;
+            display: block !important;
         }
         
-        .btn-up:hover { 
+        .btn-subir-drive:hover { 
             background: #2980b9 !important; 
         }
 
@@ -202,13 +194,12 @@
                 padding: 0.5in !important;
                 background: white !important;
                 color: black !important;
-                font-size: 36pt !important; /* 3 VECES MÁS GRANDE (12pt × 3 = 36pt) */
+                font-size: 36pt !important;
                 line-height: 1.3 !important;
                 box-sizing: border-box !important;
                 page-break-inside: avoid !important;
             }
             
-            /* Encabezado formal - LETRA 3 VECES MÁS GRANDE */
             .vale-header {
                 text-align: center;
                 margin-bottom: 40px;
@@ -217,7 +208,7 @@
             }
             
             .vale-header h1 {
-                font-size: 72pt !important; /* 3 VECES MÁS GRANDE (24pt × 3 = 72pt) */
+                font-size: 72pt !important;
                 font-weight: bold;
                 color: #000;
                 margin: 0 0 20px 0;
@@ -227,13 +218,12 @@
             }
             
             .company-info {
-                font-size: 30pt !important; /* 3 VECES MÁS GRANDE (10pt × 3 = 30pt) */
+                font-size: 30pt !important;
                 color: #555;
                 margin-bottom: 25px;
                 line-height: 1.3;
             }
             
-            /* Información de la salida - LETRA 3 VECES MÁS GRANDE */
             .vale-info {
                 display: flex;
                 justify-content: space-between;
@@ -242,7 +232,7 @@
                 background: #f8f9fa;
                 border: 2px solid #dee2e6;
                 border-radius: 8px;
-                font-size: 33pt !important; /* 3 VECES MÁS GRANDE (11pt × 3 = 33pt) */
+                font-size: 33pt !important;
                 line-height: 1.4;
             }
             
@@ -252,20 +242,19 @@
             
             .info-item {
                 margin-bottom: 20px;
-                font-size: 33pt !important; /* 3 VECES MÁS GRANDE (11pt × 3 = 33pt) */
+                font-size: 33pt !important;
             }
             
             .info-item strong {
-                min-width: 300px; /* Aumentado para texto más grande */
+                min-width: 300px;
                 display: inline-block;
             }
             
-            /* Tabla formal - LETRA 3 VECES MÁS GRANDE */
             .vale-table {
                 width: 100%;
                 border-collapse: collapse;
                 margin: 40px 0 80px 0;
-                font-size: 30pt !important; /* 3 VECES MÁS GRANDE (10pt × 3 = 30pt) */
+                font-size: 30pt !important;
             }
             
             .vale-table th {
@@ -273,25 +262,25 @@
                 color: white !important;
                 font-weight: bold;
                 text-transform: uppercase;
-                padding: 30px 20px !important; /* Aumentado */
+                padding: 30px 20px !important;
                 border: 2px solid #000;
                 text-align: center;
-                font-size: 30pt !important; /* 3 VECES MÁS GRANDE (10pt × 3 = 30pt) */
+                font-size: 30pt !important;
             }
             
             .vale-table td {
                 border: 2px solid #000;
-                padding: 25px 20px !important; /* Aumentado */
+                padding: 25px 20px !important;
                 vertical-align: top;
-                font-size: 28pt !important; /* 3 VECES MÁS GRANDE */
+                font-size: 28pt !important;
             }
             
             .cantidad-col {
-                width: 20% !important; /* Aumentado para texto más grande */
+                width: 20% !important;
                 text-align: center;
                 font-weight: bold;
                 background: #f1f1f1;
-                font-size: 32pt !important; /* 3 VECES MÁS GRANDE */
+                font-size: 32pt !important;
             }
             
             .modelo-col {
@@ -304,10 +293,9 @@
             }
             
             .descripcion-col {
-                width: 30% !important; /* Ajustado */
+                width: 30% !important;
             }
             
-            /* Firmas - LETRA 3 VECES MÁS GRANDE */
             .signature-section {
                 position: fixed;
                 bottom: 0.5in;
@@ -315,7 +303,7 @@
                 right: 0.5in;
                 margin-top: 120px;
                 padding-top: 40px;
-                border-top: 4px solid #000; /* Más grueso */
+                border-top: 4px solid #000;
             }
             
             .signature-container {
@@ -326,58 +314,54 @@
             .signature-box {
                 width: 45%;
                 text-align: center;
-                font-size: 30pt !important; /* 3 VECES MÁS GRANDE (10pt × 3 = 30pt) */
+                font-size: 30pt !important;
             }
             
             .signature-line {
                 width: 90%;
                 height: 1px;
-                border-top: 4px solid #000; /* Más grueso */
-                margin: 100px auto 30px auto; /* Aumentado */
+                border-top: 4px solid #000;
+                margin: 100px auto 30px auto;
             }
             
             .signature-name {
                 font-weight: bold;
                 margin-top: 20px;
-                font-size: 36pt !important; /* 3 VECES MÁS GRANDE (12pt × 3 = 36pt) */
+                font-size: 36pt !important;
             }
             
             .signature-title {
-                font-size: 27pt !important; /* 3 VECES MÁS GRANDE (9pt × 3 = 27pt) */
+                font-size: 27pt !important;
                 color: #555;
             }
             
-            /* Totales - LETRA 3 VECES MÁS GRANDE */
             .totals {
                 margin-top: 60px;
                 text-align: right;
-                font-size: 33pt !important; /* 3 VECES MÁS GRANDE (11pt × 3 = 33pt) */
+                font-size: 33pt !important;
             }
             
             .total-item {
                 font-weight: bold;
                 margin: 20px 0;
-                font-size: 33pt !important; /* 3 VECES MÁS GRANDE (11pt × 3 = 33pt) */
+                font-size: 33pt !important;
             }
             
-            /* Evitar saltos de página */
             .no-break {
                 page-break-inside: avoid;
             }
             
-            /* Número de página */
             .page-number {
                 position: fixed;
                 bottom: 0.2in;
                 right: 0.5in;
-                font-size: 24pt !important; /* 3 VECES MÁS GRANDE (8pt × 3 = 24pt) */
+                font-size: 24pt !important;
                 color: #666;
             }
             
-            /* Ajustar márgenes para que quepa en una hoja */
             #print-vale {
                 transform-origin: top left;
-                transform: scale(0.9); /* Reducir ligeramente para que quepa */
+                transform: scale(0.9);
             }
             
             .bottom-preview, .side-menu, #mainSearch, header { display: none !important; }
@@ -426,17 +410,15 @@
         </section>
     </div>
 
-    <!-- VISOR INFERIOR MEJORADO CON BOTÓN DE SUBIR -->
+    <!-- VISOR INFERIOR CON BOTÓN "SUBIR A DRIVE" -->
     <div class="bottom-preview">
         <div class="preview-image-box">
             <span id="status-foto" style="font-size:12px; color:#2980b9; font-weight:bold; margin-bottom:8px;">Selecciona un material para ver detalles</span>
             <img id="main-preview-img" src="imagenes/sin_foto.jpg" alt="Vista previa">
             
             <div class="upload-controls" id="upload-box-drive">
-                <button class="btn-sel" onclick="document.getElementById('fileDrive').click()">📁 Elegir imagen</button>
-                <input type="file" id="fileDrive" accept="image/*" style="display:none;">
-                <button id="btnSubirDrive" class="btn-up">🚀 Subir a Drive</button>
-                <div id="file-name" style="font-size:11px; color:#666; margin-top:5px; display:none;"></div>
+                <input type="file" id="fileDrive" accept="image/*" style="font-size:12px; width:100%; padding: 5px; display: none;">
+                <button id="btnSubirDrive" class="btn-subir-drive">SUBIR A DRIVE</button>
             </div>
         </div>
 
@@ -541,20 +523,23 @@
             document.getElementById('upload-box-drive').classList.add('active');
         }
 
-        // Configurar el input file para mostrar nombre del archivo
-        const fileInput = document.getElementById('fileDrive');
-        const fileNameDisplay = document.getElementById('file-name');
+        // Configurar el botón de subir
         const btnSubirDrive = document.getElementById('btnSubirDrive');
+        const fileInput = document.getElementById('fileDrive');
         
-        fileInput.addEventListener('change', function(e) {
-            if(this.files && this.files[0]) {
-                const fileName = this.files[0].name;
-                fileNameDisplay.textContent = "Archivo: " + fileName;
-                fileNameDisplay.style.display = 'block';
-                btnSubirDrive.style.display = 'block';
-            } else {
-                fileNameDisplay.style.display = 'none';
-                btnSubirDrive.style.display = 'none';
+        // Cuando se hace clic en el botón "SUBIR A DRIVE", abrir el selector de archivos
+        btnSubirDrive.addEventListener('click', function() {
+            if (!itemSeleccionado) {
+                alert("Por favor, selecciona un producto primero");
+                return;
+            }
+            fileInput.click();
+        });
+
+        // Cuando se selecciona un archivo, subirlo automáticamente
+        fileInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                subirADrive();
             }
         });
 
@@ -624,11 +609,6 @@
                         statusFoto.innerText = "Error al buscar en Drive";
                         statusFoto.style.color = "#e74c3c";
                     }
-
-                    // Configurar el botón de subir para el producto actual
-                    if(puedeSubirImg) {
-                        btnSubirDrive.onclick = () => subirADrive(nombreFoto);
-                    }
                 };
 
                 tr.innerHTML = `
@@ -648,19 +628,26 @@
         }
 
         // LÓGICA DE SUBIDA DE IMÁGENES - MEJORADA
-        async function subirADrive(nombreProducto) {
+        async function subirADrive() {
+            if (!itemSeleccionado) {
+                alert("Por favor, selecciona un producto primero");
+                return;
+            }
+
             const file = fileInput.files[0];
             if(!file) return alert("Por favor, selecciona una imagen primero");
 
             // Validar tipo de archivo
             if(!file.type.startsWith('image/')) {
                 alert("Por favor, selecciona solo archivos de imagen (JPG, PNG, etc.)");
+                fileInput.value = "";
                 return;
             }
 
             // Validar tamaño (máximo 5MB)
             if(file.size > 5 * 1024 * 1024) {
                 alert("La imagen es demasiado grande. Máximo 5MB");
+                fileInput.value = "";
                 return;
             }
 
@@ -669,9 +656,11 @@
             reader.onload = async () => {
                 const base64 = reader.result.split(',')[1];
                 const statusFoto = document.getElementById('status-foto');
+                const nombreProducto = itemSeleccionado.nombre.trim();
                 
-                btnSubirDrive.innerText = "Subiendo...";
+                btnSubirDrive.innerText = "SUBIR A DRIVE (Subiendo...)";
                 btnSubirDrive.disabled = true;
+                btnSubirDrive.style.background = "#f39c12 !important";
                 statusFoto.innerText = "Subiendo imagen a Google Drive...";
                 statusFoto.style.color = "#3498db";
                 
@@ -695,23 +684,24 @@
                         
                         // Limpiar y resetear
                         fileInput.value = "";
-                        fileNameDisplay.style.display = 'none';
-                        btnSubirDrive.style.display = 'none';
                         btnSubirDrive.disabled = false;
-                        btnSubirDrive.innerText = "🚀 Subir a Drive";
+                        btnSubirDrive.innerText = "SUBIR A DRIVE";
+                        btnSubirDrive.style.background = "#3498db !important";
                     } else {
                         alert("Error al subir la imagen: " + (data.message || "Error desconocido"));
                         statusFoto.innerText = "Error al subir la imagen";
                         statusFoto.style.color = "#e74c3c";
                         btnSubirDrive.disabled = false;
-                        btnSubirDrive.innerText = "🚀 Subir a Drive";
+                        btnSubirDrive.innerText = "SUBIR A DRIVE";
+                        btnSubirDrive.style.background = "#3498db !important";
                     }
                 } catch(e) { 
                     alert("Error de conexión al subir la imagen"); 
                     statusFoto.innerText = "Error de conexión";
                     statusFoto.style.color = "#e74c3c";
                     btnSubirDrive.disabled = false;
-                    btnSubirDrive.innerText = "🚀 Subir a Drive";
+                    btnSubirDrive.innerText = "SUBIR A DRIVE";
+                    btnSubirDrive.style.background = "#3498db !important";
                 }
             };
         }
