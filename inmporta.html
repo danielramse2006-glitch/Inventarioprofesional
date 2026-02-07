@@ -1,30 +1,36 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8"><title>Importar Datos - Inventario</title>
+    <meta charset="UTF-8"><title>Importar JSON - Inventario</title>
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
         .import-container { max-width: 800px; margin: 20px auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .log-box { background: #222; color: #0f0; padding: 15px; height: 300px; overflow-y: auto; font-family: monospace; font-size: 12px; margin-top: 20px; border-radius: 5px; }
-        .error-msg { color: #ff6b6b; }
-        .success-msg { color: #51cf66; }
-        progress { width: 100%; height: 20px; margin-top: 10px; }
+        .log-box { background: #1e1e1e; color: #00ff00; padding: 15px; height: 350px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 13px; margin-top: 20px; border-radius: 5px; border: 1px solid #333; }
+        .error-msg { color: #ff5555; font-weight: bold; }
+        .success-msg { color: #55ff55; }
+        .warning-msg { color: #ffff55; }
+        progress { width: 100%; height: 25px; margin-top: 10px; }
     </style>
 </head>
 <body class="bg-blue">
     <div class="import-container">
-        <h2 style="color:#333; text-align:center;">Masive Import (CSV)</h2>
-        <p style="font-size:13px; color:#666;">Selecciona un archivo .csv con las columnas: <br><b>modelo, noParte, nombre, cantidad, costo, laboratorio, rack, contenedor</b></p>
+        <h2 style="color:#2c3e50; text-align:center; margin-top:0;">Importación Masiva (JSON)</h2>
+        <p style="font-size:14px; color:#666; text-align:center;">
+            Carga tu archivo <b>.json</b> generado desde Excel.<br>
+            Asegúrate que los nombres de los campos coincidan con la base de datos.
+        </p>
         
-        <input type="file" id="csvFile" accept=".csv" style="margin: 20px 0;">
-        <progress id="importProgress" value="0" max="100"></progress>
-        <p id="progressText" style="text-align:center; font-weight:bold; color:#333;">Esperando archivo...</p>
-        
-        <button id="btnImport" class="btn-action" style="width:100%; background:#27ae60; color:white;">INICIAR IMPORTACIÓN</button>
-        <button onclick="location.href='index.html'" class="btn-action" style="width:100%; margin-top:10px;">VOLVER AL PANEL</button>
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px dashed #ccc; text-align: center;">
+            <input type="file" id="jsonFile" accept=".json">
+        </div>
 
-        <div class="log-box" id="log">--- LOG DE OPERACIONES ---</div>
+        <progress id="importProgress" value="0" max="100"></progress>
+        <p id="progressText" style="text-align:center; font-weight:bold; color:#2c3e50; margin: 10px 0;">Listo para procesar</p>
+        
+        <button id="btnImport" class="btn-action" style="width:100%; background:#27ae60; color:white; font-size:16px;">▶ INICIAR CARGA A FIREBASE</button>
+        <button onclick="location.href='index.html'" class="btn-action" style="width:100%; margin-top:10px; background:#95a5a6; color:white;">VOLVER AL INICIO</button>
+
+        <div class="log-box" id="log">--- ESPERANDO ARCHIVO PARA LOGUEAR ---</div>
     </div>
 
     <script type="module">
@@ -34,14 +40,17 @@
         checkAuth('registrar');
 
         const btnImport = document.getElementById('btnImport');
-        const fileInput = document.getElementById('csvFile');
+        const fileInput = document.getElementById('jsonFile');
         const logBox = document.getElementById('log');
         const progress = document.getElementById('importProgress');
         const progressText = document.getElementById('progressText');
 
         function addLog(msg, type = '') {
             const div = document.createElement('div');
-            div.className = type === 'error' ? 'error-msg' : (type === 'success' ? 'success-msg' : '');
+            if(type === 'error') div.className = 'error-msg';
+            if(type === 'success') div.className = 'success-msg';
+            if(type === 'warning') div.className = 'warning-msg';
+            
             div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
             logBox.appendChild(div);
             logBox.scrollTop = logBox.scrollHeight;
@@ -49,70 +58,88 @@
 
         btnImport.onclick = () => {
             const file = fileInput.files[0];
-            if (!file) return alert("Selecciona un archivo primero");
+            if (!file) return alert("Por favor, selecciona el archivo JSON primero.");
 
-            btnImport.disabled = true;
-            addLog("Iniciando lectura de archivo...", "info");
+            const reader = new FileReader();
+            
+            reader.onload = async (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (!Array.isArray(data)) throw new Error("El JSON debe ser una lista (array) de objetos.");
 
-            Papa.parse(file, {
-                header: true,
-                skipEmptyLines: true,
-                complete: async (results) => {
-                    const data = results.data;
+                    btnImport.disabled = true;
+                    addLog(`Archivo leído. Procesando ${data.length} registros...`, "warning");
+
                     let importados = 0;
                     let duplicados = 0;
                     let errores = 0;
 
                     for (let i = 0; i < data.length; i++) {
-                        const row = data[i];
-                        const np = row.noParte?.trim();
+                        const item = data[i];
+                        // Ajustamos los nombres de los campos según tu Excel/JSON
+                        const np = (item.noParte || item["No. Parte"] || "").toString().trim();
 
                         if (!np) {
-                            addLog(`Fila ${i+1}: NoParte vacío, saltando.`, "error");
+                            addLog(`Fila ${i+1}: Sin No. Parte, saltando...`, "error");
                             errores++;
                             continue;
                         }
 
                         try {
-                            // Validar si ya existe
+                            // Validar duplicado por Número de Parte
                             const q = query(collection(db, "productos"), where("noParte", "==", np));
                             const snap = await getDocs(q);
 
                             if (snap.empty) {
                                 await addDoc(collection(db, "productos"), {
-                                    modelo: row.modelo || '',
+                                    modelo: item.modelo || item.Modelo || "",
                                     noParte: np,
-                                    nombre: row.nombre || 'Sin nombre',
-                                    cantidad: Number(row.cantidad) || 0,
-                                    costo: Number(row.costo) || 0,
-                                    laboratorio: row.laboratorio || '',
-                                    rack: row.rack || '',
-                                    contenedor: row.contenedor || '',
-                                    fechaImport: serverTimestamp()
+                                    nombre: item.nombre || item.Nombre || "Sin Nombre",
+                                    cantidad: Number(item.cantidad || item.Cantidad || 0),
+                                    costo: Number(item.costo || item.Costo || 0),
+                                    laboratorio: item.laboratorio || item.Laboratorio || "",
+                                    rack: item.rack || item.Rack || "",
+                                    contenedor: item.contenedor || item.Contenedor || "",
+                                    observaciones: item.observaciones || item.Observaciones || "",
+                                    // Tipos por defecto (puedes ajustarlos si vienen en el JSON)
+                                    consumible: item.consumible || false,
+                                    pieza: item.pieza || false,
+                                    herramienta: item.herramienta || false,
+                                    equipo: item.equipo || false,
+                                    fechaCarga: serverTimestamp()
                                 });
                                 importados++;
-                                addLog(`✅ Importado: ${np}`, "success");
+                                addLog(`✅ Cargado: ${np}`, "success");
                             } else {
                                 duplicados++;
-                                addLog(`⚠️ Duplicado: ${np} (Omitido)`, "");
+                                addLog(`⚠️ Ya existe: ${np} (Omitido)`, "warning");
                             }
-                        } catch (e) {
+                        } catch (err) {
                             errores++;
-                            addLog(`❌ Error en ${np}: ${e.message}`, "error");
+                            addLog(`❌ Error en ${np}: ${err.message}`, "error");
                         }
 
-                        // Actualizar barra
+                        // Actualizar barra de progreso
                         const p = Math.round(((i + 1) / data.length) * 100);
                         progress.value = p;
-                        progressText.textContent = `Procesando: ${p}%`;
+                        progressText.textContent = `Progreso: ${p}% (${i+1}/${data.length})`;
                     }
 
-                    addLog(`--- PROCESO TERMINADO ---`);
-                    addLog(`Éxito: ${importados} | Duplicados: ${duplicados} | Errores: ${errores}`);
-                    alert("Importación finalizada. Revisa el log.");
+                    addLog(`\n--- RESUMEN FINAL ---`);
+                    addLog(`Éxitos: ${importados}`, "success");
+                    addLog(`Duplicados: ${duplicados}`, "warning");
+                    addLog(`Fallos: ${errores}`, "error");
+                    
+                    alert("¡Proceso terminado!");
                     btnImport.disabled = false;
+
+                } catch (err) {
+                    alert("Error al leer el JSON: " + err.message);
+                    console.error(err);
                 }
-            });
+            };
+
+            reader.readAsText(file);
         };
     </script>
 </body>
