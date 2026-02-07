@@ -227,8 +227,8 @@
                 const res = await fetch(`${scriptURL}?itemName=${encodeURIComponent(item.nombre)}`);
                 const data = await res.json();
                 if(data.result === "success" && data.id) {
-                    // URL CORREGIDA PARA VISUALIZACIÓN
-                    img.src = "https://drive.google.com/thumbnail?id=" + data.id + "&sz=w1000";
+                    // URL CORREGIDA PARA VISUALIZACIÓN - USAR EL FORMATO QUE FUNCIONA
+                    img.src = `https://lh3.googleusercontent.com/d/${data.id}`;
                     status.innerText = "✓ Encontrada en Drive";
                 } else {
                     img.src = "imagenes/sin_foto.jpg";
@@ -270,11 +270,14 @@
                     if(d.result === "success") {
                         alert("¡Imagen guardada!");
                         btnConfirmUp.style.display = 'none';
+                        fileInput.value = ''; // Limpiar el input file
                         mostrarDetalle(itemSeleccionado);
                     } else {
                         alert("Error: " + d.error);
                     }
-                } catch (e) { alert("Error al subir"); }
+                } catch (e) { 
+                    alert("Error al subir: " + e.message); 
+                }
                 btnConfirmUp.disabled = false;
             };
         };
