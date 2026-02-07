@@ -7,31 +7,24 @@
 </head>
 <body>
     <h2 style="text-align:center; background:#999; color:white; padding:15px; margin:0;">Actualizar Material</h2>
-    <form id="f-upd" class="grid-form" style="background:transparent;">
+    <form id="f-upd" class="grid-form">
         <div class="col">
-            <label class="check-label"><input type="checkbox"> Modelo</label><input type="text" id="m">
-            <label class="check-label"><input type="checkbox"> No. Parte</label><input type="text" id="np">
-            <label class="check-label"><input type="checkbox"> Nombre</label><input type="text" id="n">
-            <label class="check-label"><input type="checkbox"> Descripción</label><textarea id="d"></textarea>
+            <label>Modelo</label><input type="text" id="m">
+            <label>No. Parte</label><input type="text" id="np">
+            <label>Nombre</label><input type="text" id="n">
         </div>
         <div class="col">
-            <label class="check-label"><input type="checkbox"> Cantidad</label><input type="number" id="c">
-            <label class="check-label"><input type="checkbox"> Costo</label><input type="number" id="co">
-            <label class="check-label"><input type="checkbox"> Consumible</label><select id="con"><option>Consumible</option><option>No Consumible</option></select>
+            <label>Cantidad</label><input type="number" id="c">
+            <label>Costo</label><input type="number" id="co">
+            <label>Estado</label><input type="text" id="est">
         </div>
         <div class="col">
-            <label class="check-label"><input type="checkbox"> Laboratorio</label><input type="text" id="u">
-            <label class="check-label"><input type="checkbox"> Rack</label><input type="text" id="e">
-            <label class="check-label"><input type="checkbox"> Contenedor</label><input type="text" id="ct">
-        </div>
-        <div class="col">
-            <label class="check-label"><input type="checkbox"> Lote</label><input type="text" id="l">
-            <label class="check-label"><input type="checkbox"> Estado</label><input type="text" id="est">
-            <label class="check-label"><input type="checkbox"> Observaciones</label><textarea id="obs"></textarea>
+            <label>Laboratorio</label><input type="text" id="lab">
+            <label>Rack</label><input type="text" id="rac">
+            <label>Contenedor</label><input type="text" id="cnt">
         </div>
         <div class="form-buttons">
-            <select id="crit" style="width:150px;"><option value="noParte">No. Parte</option><option value="nombre">Nombre</option></select>
-            <input type="text" id="val" placeholder="Buscar...">
+            <input type="text" id="val" placeholder="No. de Parte para buscar...">
             <button type="button" id="btnBus" class="btn-action">Buscar</button>
             <button type="submit" class="btn-action">Actualizar</button>
             <button type="button" class="btn-action" onclick="location.href='index.html'">Volver</button>
@@ -44,49 +37,37 @@
         let currentId = null;
 
         document.getElementById('btnBus').onclick = async () => {
-            const crit = document.getElementById('crit').value;
             const val = document.getElementById('val').value.trim();
-            if(!val) return alert("Escribe algo para buscar");
-
-            const q = query(collection(db, "productos"), where(crit, "==", val));
+            const q = query(collection(db, "productos"), where("noParte", "==", val));
             const snap = await getDocs(q);
             if(!snap.empty) {
                 const d = snap.docs[0].data(); currentId = snap.docs[0].id;
-                document.getElementById('m').value = d.modelo || ''; 
-                document.getElementById('np').value = d.noParte || '';
-                document.getElementById('n').value = d.nombre || ''; 
-                document.getElementById('d').value = d.descripcion || '';
-                document.getElementById('c').value = d.cantidad || 0; 
-                document.getElementById('co').value = d.costo || 0;
-                document.getElementById('u').value = d.ubicacion || ''; 
-                document.getElementById('e').value = d.estante || '';
-                document.getElementById('ct').value = d.contenedor || ''; 
-                document.getElementById('l').value = d.lote || '';
-                document.getElementById('est').value = d.estado || ''; // Campo nuevo
-                document.getElementById('obs').value = d.observaciones || '';
-                alert("Datos cargados");
-            } else { alert("No encontrado"); }
+                document.getElementById('m').value = d.modelo;
+                document.getElementById('np').value = d.noParte;
+                document.getElementById('n').value = d.nombre;
+                document.getElementById('c').value = d.cantidad;
+                document.getElementById('co').value = d.costo;
+                document.getElementById('est').value = d.estado || '';
+                document.getElementById('lab').value = d.laboratorio || '';
+                document.getElementById('rac').value = d.rack || '';
+                document.getElementById('cnt').value = d.contenedor || '';
+                alert("Material cargado");
+            } else alert("No encontrado");
         };
 
         document.getElementById('f-upd').onsubmit = async (e) => {
             e.preventDefault();
-            if(!currentId) return alert("Primero busca un producto");
-            
-            // Solo actualizamos campos si los inputs tienen valor (opcional, o sobreescribir todo)
-            // Aquí sobreescribimos con lo que haya en pantalla
+            if(!currentId) return alert("Busca un material primero");
             await updateDoc(doc(db, "productos", currentId), {
                 modelo: document.getElementById('m').value,
                 noParte: document.getElementById('np').value,
                 nombre: document.getElementById('n').value,
-                descripcion: document.getElementById('d').value,
                 cantidad: Number(document.getElementById('c').value),
                 costo: Number(document.getElementById('co').value),
-                ubicacion: document.getElementById('u').value,
-                estante: document.getElementById('e').value,
-                contenedor: document.getElementById('ct').value,
-                lote: document.getElementById('l').value,
                 estado: document.getElementById('est').value,
-                observaciones: document.getElementById('obs').value
+                laboratorio: document.getElementById('lab').value,
+                rack: document.getElementById('rac').value,
+                contenedor: document.getElementById('cnt').value
             });
             alert("Actualizado correctamente");
         };

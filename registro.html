@@ -5,7 +5,7 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h2 style="text-align:center; background:#eee; padding:15px; margin:0;">Registro de Nuevo Material</h2>
+    <h2 style="text-align:center; background:#eee; padding:15px; margin:0; color:#333;">Registro de Nuevo Material</h2>
     <form id="form-reg" class="grid-form">
         <div class="col">
             <label>Modelo *</label><input type="text" id="modelo" required>
@@ -14,64 +14,52 @@
             <label>Descripción</label><textarea id="descripcion"></textarea>
         </div>
         <div class="col">
-            <label>Cantidad *</label><input type="number" id="cantidad" required min="0">
-            <label>Costo *</label><input type="number" id="costo" required min="0">
-            <label>Tipo Insumo</label><select id="consumible"><option>Consumible</option><option>No Consumible</option></select>
-            <div style="background:#f9f9f9; padding:10px; border:1px solid #ddd; border-radius:4px;">
-                <label><input type="checkbox" name="tipo" value="Herramienta"> Herramienta</label><br>
-                <label><input type="checkbox" name="tipo" value="Equipo"> Equipo</label><br>
-                <label><input type="checkbox" name="tipo" value="Pieza"> Pieza</label>
-            </div>
-        </div>
-        <div class="col">
-            <label>Laboratorio / Área</label><input type="text" id="ubicacion" placeholder="Ej. Lab Diesel">
-            <label>Rack</label><input type="text" id="estante" placeholder="Ej. A-1">
-            <label>Contenedor</label><input type="text" id="contenedor">
-        </div>
-        <div class="col">
+            <label>Cantidad *</label><input type="number" id="cantidad" required>
+            <label>Costo *</label><input type="number" id="costo" required>
             <label>Lote</label><input type="text" id="lote">
-            <label>Estado</label><input type="text" id="estado" placeholder="Ej. Nuevo, Usado, Dañado">
+            <label>Estado</label><input type="text" id="estado" placeholder="Nuevo, usado...">
+        </div>
+        <div class="col">
+            <p style="color:#333; font-weight:bold; margin-bottom:10px;">Tipo de Insumo:</p>
+            <label style="color:#333;"><input type="checkbox" id="consumible"> Consumible</label><br>
+            <label style="color:#333;"><input type="checkbox" id="pieza"> Pieza</label><br>
+            <label style="color:#333;"><input type="checkbox" id="herramienta"> Herramienta</label><br>
+            <label style="color:#333;"><input type="checkbox" id="equipo"> Equipo</label>
+        </div>
+        <div class="col">
+            <label>Laboratorio</label><input type="text" id="laboratorio">
+            <label>Rack</label><input type="text" id="rack">
+            <label>Contenedor</label><input type="text" id="contenedor">
             <label>Observaciones</label><textarea id="observaciones"></textarea>
         </div>
         <div class="form-buttons">
             <button type="submit" class="btn-action">Registrar</button>
-            <button type="reset" class="btn-action">Limpiar</button>
             <button type="button" class="btn-action" onclick="location.href='index.html'">Volver</button>
         </div>
     </form>
     <script type="module">
         import { db, checkAuth } from './config.js';
-        import { collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         checkAuth('registrar');
 
         document.getElementById('form-reg').onsubmit = async (e) => {
             e.preventDefault();
-            const noParte = document.getElementById('noParte').value.trim();
-            const cant = Number(document.getElementById('cantidad').value);
-            
-            if(cant < 0) return alert("La cantidad no puede ser negativa.");
-
-            // Validar duplicados
-            const q = query(collection(db, "productos"), where("noParte", "==", noParte));
-            const snap = await getDocs(q);
-            if(!snap.empty) return alert("¡Error! Ya existe un producto con este Número de Parte.");
-
-            const tipos = Array.from(document.querySelectorAll('input[name="tipo"]:checked')).map(cb => cb.value);
-            
             await addDoc(collection(db, "productos"), {
                 modelo: document.getElementById('modelo').value,
-                noParte: noParte,
+                noParte: document.getElementById('noParte').value,
                 nombre: document.getElementById('nombre').value,
                 descripcion: document.getElementById('descripcion').value,
-                cantidad: cant,
+                cantidad: Number(document.getElementById('cantidad').value),
                 costo: Number(document.getElementById('costo').value),
-                consumible: document.getElementById('consumible').value,
-                tipo: tipos.join(', '),
-                ubicacion: document.getElementById('ubicacion').value, // Laboratorio
-                estante: document.getElementById('estante').value,     // Rack
-                contenedor: document.getElementById('contenedor').value,
                 lote: document.getElementById('lote').value,
-                estado: document.getElementById('estado').value,       // Nuevo campo
+                estado: document.getElementById('estado').value,
+                consumible: document.getElementById('consumible').checked ? "X" : "",
+                pieza: document.getElementById('pieza').checked ? "X" : "",
+                herramienta: document.getElementById('herramienta').checked ? "X" : "",
+                equipo: document.getElementById('equipo').checked ? "X" : "",
+                laboratorio: document.getElementById('laboratorio').value,
+                rack: document.getElementById('rack').value,
+                contenedor: document.getElementById('contenedor').value,
                 observaciones: document.getElementById('observaciones').value
             });
             alert("Registrado correctamente"); e.target.reset();
