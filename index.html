@@ -1,27 +1,21 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>Inventario - Panel Principal</title>
+    <meta charset="UTF-8"><title>Inventario - Panel Principal</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        body, html { 
-            height: 100%; 
-            margin: 0; 
-            overflow: hidden; 
-            background-color: #0080ff; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            font-size: 14px;
-        }
+        /* Bloqueo de scroll general para scroll interno en tabla */
+        body, html { height: 100%; margin: 0; overflow: hidden; background-color: #0080ff; font-family: sans-serif; }
         
         .main-container { 
             display: flex; 
-            height: calc(100vh - 320px);
+            height: calc(100vh - 250px); /* Restamos el espacio del visor inferior */
             padding: 15px; 
             gap: 15px; 
             box-sizing: border-box;
         }
 
+        /* Tabla con scroll independiente */
         .content { 
             flex: 1; 
             display: flex; 
@@ -32,32 +26,13 @@
             overflow: hidden; 
             box-shadow: 0 4px 10px rgba(0,0,0,0.2); 
         }
+        .table-wrapper { flex: 1; overflow-y: auto; border: 1px solid #ddd; }
         
-        .table-wrapper { 
-            flex: 1; 
-            overflow-y: auto; 
-            border: 1px solid #ddd; 
-            font-size: 13px;
-        }
-        
-        table, .bottom-preview { 
-            color: black !important; 
-            font-size: 13px;
-        }
-        
-        th { 
-            color: white !important; 
-            background-color: #2c3e50; 
-            font-size: 13px;
-            padding: 12px 8px !important;
-        }
-        
-        td {
-            padding: 10px 8px !important;
-            font-size: 13px;
-        }
+        /* Forzar texto negro en tabla y visor */
+        table, .bottom-preview { color: black !important; }
+        th { color: white !important; background-color: #2c3e50; }
 
-        /* --- VISOR INFERIOR FIJO (MÁS ALTO) --- */
+        /* --- VISOR INFERIOR FIJO --- */
         .bottom-preview {
             position: fixed;
             bottom: 0;
@@ -69,14 +44,14 @@
             display: flex;
             align-items: center;
             gap: 40px;
-            height: 320px;
+            height: 250px;
             box-shadow: 0 -5px 25px rgba(0,0,0,0.3);
             z-index: 1000;
             box-sizing: border-box;
         }
 
         .preview-image-box { 
-            flex: 0 0 280px;
+            flex: 0 0 220px; 
             text-align: center; 
             height: 100%; 
             display: flex; 
@@ -85,335 +60,53 @@
             border-right: 1px solid #eee;
             padding-right: 20px;
         }
-        
-        #main-preview-img { 
-            max-width: 100%; 
-            max-height: 220px;
-            object-fit: contain; 
-            border-radius: 5px;
-            border: 1px solid #ddd;
-            background: #f9f9f9;
-        }
+        #main-preview-img { max-width: 100%; max-height: 150px; object-fit: contain; border-radius: 5px; }
 
-        /* CONTROLES DE SUBIDA - ESTILO DEL PRIMER CÓDIGO */
-        .upload-controls { 
-            margin-top: 10px; 
-            display: flex; 
-            gap: 8px; 
-            justify-content: center; 
-        }
-        
-        .btn-sel { 
-            background: #7f8c8d; 
-            color: white; 
-            border: none; 
-            padding: 8px 12px; 
-            border-radius: 4px; 
-            cursor: pointer; 
-            font-size: 12px; 
-            font-weight: bold; 
-        }
-        
-        .btn-sel:hover {
-            background: #95a5a6;
-        }
-        
-        .btn-up { 
-            background: #27ae60; 
-            color: white; 
-            border: none; 
-            padding: 8px 12px; 
-            border-radius: 4px; 
-            cursor: pointer; 
-            font-size: 12px; 
-            font-weight: bold; 
-            display: none; 
-        }
-        
-        .btn-up:hover { 
-            background: #2ecc71; 
-        }
+        /* Lógica de botones de subida */
+        .upload-controls { margin-top: 10px; display: flex; gap: 8px; justify-content: center; }
+        .btn-sel { background: #7f8c8d; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .btn-up { background: #27ae60; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; display: none; }
+        .btn-up:hover { background: #2ecc71; }
 
-        .btn-up:disabled { 
-            background: #95a5a6; 
-            cursor: not-allowed; 
-        }
+        .preview-info-box { flex: 1; overflow-y: auto; height: 100%; }
+        .preview-info-box h2 { margin-top: 0; color: #2c3e50; }
 
-        .preview-info-box { 
-            flex: 1; 
-            overflow-y: auto; 
-            height: 100%; 
-            font-size: 14px;
-        }
-        
-        .preview-info-box h2 { 
-            margin-top: 0; 
-            color: #2c3e50; 
-            font-size: 22px;
-            margin-bottom: 15px;
-        }
-        
-        #prod-detail-display {
-            font-size: 14px !important;
-            line-height: 1.6 !important;
-        }
-        
-        #prod-detail-display div {
-            margin-bottom: 10px;
-            padding: 5px 0;
-            border-bottom: 1px solid #f0f0f0;
-        }
-        
-        #prod-detail-display div:last-child {
-            border-bottom: none;
-        }
-
-        .cart-box { 
-            background: #fff; 
-            padding: 12px;
-            border-radius: 6px; 
-            border: 1px solid #ccc; 
-            margin-top: 15px; 
-            color: black; 
-            font-size: 13px;
-        }
-        
-        /* ESTILOS DE IMPRESIÓN CON LETRA 3 VECES MÁS GRANDE */
-        #print-vale { 
-            display: none; 
-            font-family: 'Calibri', 'Arial', sans-serif;
-            color: #000;
-        }
+        .cart-box { background: #fff; padding: 10px; border-radius: 6px; border: 1px solid #ccc; margin-top: 15px; color: black; }
         
         @media print {
-            body * { 
-                visibility: hidden; 
-                margin: 0;
-                padding: 0;
-            }
-            
-            #print-vale, #print-vale * { 
-                visibility: visible; 
-            }
-            
-            #print-vale { 
-                display: block !important;
-                position: absolute !important;
-                left: 0 !important;
-                top: 0 !important;
-                width: 100% !important;
-                height: 100% !important;
-                padding: 0.5in !important;
-                background: white !important;
-                color: black !important;
-                font-size: 36pt !important;
-                line-height: 1.3 !important;
-                box-sizing: border-box !important;
-                page-break-inside: avoid !important;
-            }
-            
-            .vale-header {
-                text-align: center;
-                margin-bottom: 40px;
-                border-bottom: 4px double #000;
-                padding-bottom: 30px;
-            }
-            
-            .vale-header h1 {
-                font-size: 72pt !important;
-                font-weight: bold;
-                color: #000;
-                margin: 0 0 20px 0;
-                text-transform: uppercase;
-                letter-spacing: 2px;
-                line-height: 1.1;
-            }
-            
-            .company-info {
-                font-size: 30pt !important;
-                color: #555;
-                margin-bottom: 25px;
-                line-height: 1.3;
-            }
-            
-            .vale-info {
-                display: flex;
-                justify-content: space-between;
-                margin-bottom: 50px;
-                padding: 30px;
-                background: #f8f9fa;
-                border: 2px solid #dee2e6;
-                border-radius: 8px;
-                font-size: 33pt !important;
-                line-height: 1.4;
-            }
-            
-            .info-left, .info-right {
-                flex: 1;
-            }
-            
-            .info-item {
-                margin-bottom: 20px;
-                font-size: 33pt !important;
-            }
-            
-            .info-item strong {
-                min-width: 300px;
-                display: inline-block;
-            }
-            
-            .vale-table {
-                width: 100%;
-                border-collapse: collapse;
-                margin: 40px 0 80px 0;
-                font-size: 30pt !important;
-            }
-            
-            .vale-table th {
-                background: #2c3e50 !important;
-                color: white !important;
-                font-weight: bold;
-                text-transform: uppercase;
-                padding: 30px 20px !important;
-                border: 2px solid #000;
-                text-align: center;
-                font-size: 30pt !important;
-            }
-            
-            .vale-table td {
-                border: 2px solid #000;
-                padding: 25px 20px !important;
-                vertical-align: top;
-                font-size: 28pt !important;
-            }
-            
-            .cantidad-col {
-                width: 20% !important;
-                text-align: center;
-                font-weight: bold;
-                background: #f1f1f1;
-                font-size: 32pt !important;
-            }
-            
-            .modelo-col {
-                width: 25% !important;
-            }
-            
-            .parte-col {
-                width: 25% !important;
-                font-weight: bold;
-            }
-            
-            .descripcion-col {
-                width: 30% !important;
-            }
-            
-            .signature-section {
-                position: fixed;
-                bottom: 0.5in;
-                left: 0.5in;
-                right: 0.5in;
-                margin-top: 120px;
-                padding-top: 40px;
-                border-top: 4px solid #000;
-            }
-            
-            .signature-container {
-                display: flex;
-                justify-content: space-between;
-            }
-            
-            .signature-box {
-                width: 45%;
-                text-align: center;
-                font-size: 30pt !important;
-            }
-            
-            .signature-line {
-                width: 90%;
-                height: 1px;
-                border-top: 4px solid #000;
-                margin: 100px auto 30px auto;
-            }
-            
-            .signature-name {
-                font-weight: bold;
-                margin-top: 20px;
-                font-size: 36pt !important;
-            }
-            
-            .signature-title {
-                font-size: 27pt !important;
-                color: #555;
-            }
-            
-            .totals {
-                margin-top: 60px;
-                text-align: right;
-                font-size: 33pt !important;
-            }
-            
-            .total-item {
-                font-weight: bold;
-                margin: 20px 0;
-                font-size: 33pt !important;
-            }
-            
-            .no-break {
-                page-break-inside: avoid;
-            }
-            
-            .page-number {
-                position: fixed;
-                bottom: 0.2in;
-                right: 0.5in;
-                font-size: 24pt !important;
-                color: #666;
-            }
-            
-            #print-vale {
-                transform-origin: top left;
-                transform: scale(0.9);
-            }
-            
             .bottom-preview, .side-menu, #mainSearch, header { display: none !important; }
+            #print-vale { display: block !important; position: absolute; top: 0; left: 0; width: 100%; color: black; }
         }
     </style>
 </head>
 <body class="bg-blue">
-    <header><h1 style="color: white; margin: 10px 0; text-align: center; font-size: 26px;">Control de Inventario</h1></header>
+    <header><h1 style="color: white; margin: 10px 0; text-align: center;">Control de Inventario</h1></header>
     
     <div class="main-container">
-        <nav class="side-menu" style="width: 220px; display: flex; flex-direction: column; gap: 12px;">
-            <button id="navReg" style="display:none; font-size: 14px; padding: 10px;" onclick="location.href='registro.html'">Registrar</button>
-            <button id="navAct" style="display:none; font-size: 14px; padding: 10px;" onclick="location.href='actualizar.html'">Actualizar</button>
-            <button id="navEli" style="display:none; font-size: 14px; padding: 10px;" onclick="location.href='eliminar.html'">Eliminar</button>
-            <button id="navAdm" style="display:none; background:#f1c40f; font-size: 14px; padding: 10px;" onclick="location.href='usuarios.html'">Usuarios</button>
+        <nav class="side-menu" style="width: 200px; display: flex; flex-direction: column; gap: 10px;">
+            <button id="navReg" style="display:none;" onclick="location.href='registro.html'">Registrar</button>
+            <button id="navAct" style="display:none;" onclick="location.href='actualizar.html'">Actualizar</button>
+            <button id="navEli" style="display:none;" onclick="location.href='eliminar.html'">Eliminar</button>
+            <button id="navAdm" style="display:none; background:#f1c40f;" onclick="location.href='usuarios.html'">Usuarios</button>
             
             <div id="cart-box" class="cart-box">
-                <h4 style="margin:0; text-align:center; font-size: 15px;">📋 VALE DE SALIDA</h4>
-                <div id="cart-list" style="margin: 12px 0; font-size: 13px; max-height: 100px; overflow-y:auto;"><i>Vacío</i></div>
-                <input type="text" id="recep" placeholder="¿Quién recibe?" style="width:95%; margin-bottom: 8px; padding: 8px; font-size: 13px;">
-                <input type="text" id="proyec" placeholder="Proyecto/Orden" style="width:95%; padding: 8px; font-size: 13px;">
-                <button onclick="procesarSalida()" style="width:100%; background:#e67e22; color:white; border:none; padding:10px; margin-top:10px; cursor:pointer; font-weight:bold; font-size: 14px;">GENERAR VALE</button>
+                <h4 style="margin:0; text-align:center;">📋 VALE</h4>
+                <div id="cart-list" style="margin: 10px 0; font-size: 0.8em; max-height: 80px; overflow-y:auto;"><i>Vacío</i></div>
+                <input type="text" id="recep" placeholder="¿Quién recibe?" style="width:90%; margin-bottom: 5px;">
+                <input type="text" id="proyec" placeholder="Proyecto" style="width:90%;">
+                <button onclick="procesarSalida()" style="width:100%; background:#e67e22; color:white; border:none; padding:8px; margin-top:5px; cursor:pointer; font-weight:bold;">GENERAR VALE</button>
             </div>
-            <button class="btn-logout" style="background:#c0392b; color:white; padding: 12px; border: none; border-radius: 4px; cursor: pointer; margin-top: auto; font-size: 14px;" onclick="cerrarSesion()">Cerrar Sesión</button>
+            <button class="btn-logout" style="background:#c0392b; color:white; padding: 10px; border: none; border-radius: 4px; cursor: pointer; margin-top: auto;" onclick="sessionStorage.clear(); location.href='login.html'">Cerrar Sesión</button>
         </nav>
 
         <section class="content">
-            <input type="text" id="mainSearch" placeholder="🔍 Buscar por modelo, nombre o no. parte..." style="width:100%; padding:14px; border-radius:5px; border:1px solid #ddd; box-sizing: border-box; font-size: 14px;">
+            <input type="text" id="mainSearch" placeholder="🔍 Buscar por modelo, nombre o no. parte..." style="width:100%; padding:12px; border-radius:5px; border:1px solid #ddd; box-sizing: border-box;">
             <div class="table-wrapper">
                 <table>
                     <thead>
                         <tr>
-                            <th id="th-plus" style="display:none; font-size: 14px;">+</th>
-                            <th style="font-size: 13px;">Modelo</th>
-                            <th style="font-size: 13px;">No. Parte</th>
-                            <th style="font-size: 13px;">Nombre</th>
-                            <th style="font-size: 13px;">Stock</th>
-                            <th style="font-size: 13px;">Laboratorio</th>
-                            <th style="font-size: 13px;">Rack</th>
-                            <th style="font-size: 13px;">Contenedor</th>
+                            <th id="th-plus" style="display:none;">+</th>
+                            <th>Modelo</th><th>No. Parte</th><th>Nombre</th><th>Stock</th><th>Laboratorio</th><th>Rack</th><th>Contenedor</th>
                         </tr>
                     </thead>
                     <tbody id="inventory-body"></tbody>
@@ -422,13 +115,11 @@
         </section>
     </div>
 
-    <!-- VISOR INFERIOR CON BOTÓN "SUBIR A DRIVE" -->
     <div class="bottom-preview">
         <div class="preview-image-box">
-            <span id="status-foto" style="font-size:12px; color:#2980b9; font-weight:bold; margin-bottom:8px;">Selecciona un material para ver detalles</span>
-            <img id="main-preview-img" src="imagenes/sin_foto.jpg" alt="Vista previa">
+            <span id="status-foto" style="font-size:11px; color:#2980b9; font-weight:bold; margin-bottom:5px;">Selecciona un material</span>
+            <img id="main-preview-img" src="imagenes/sin_foto.jpg">
             
-            <!-- CONTROLES DE SUBIDA DEL PRIMER CÓDIGO -->
             <div class="upload-controls" id="up-ui" style="display:none;">
                 <button class="btn-sel" onclick="document.getElementById('fileInput').click()">📁 Elegir</button>
                 <button id="btnConfirmUp" class="btn-up">🚀 Subir</button>
@@ -437,72 +128,26 @@
         </div>
 
         <div class="preview-info-box">
-            <h2 id="prod-name-display">Detalles del Material</h2>
-            <hr style="margin: 10px 0 15px 0;">
-            <div id="prod-detail-display" style="font-size: 14px;">
-                Haz clic en cualquier producto de la tabla para ver su información detallada y fotografía.
+            <h2 id="p-nombre">Detalles del Material</h2>
+            <hr>
+            <div id="p-detalles" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 14px;">
+                Haz clic en una fila para ver la información.
             </div>
         </div>
     </div>
 
-    <!-- VALE DE SALIDA - LETRA 3 VECES MÁS GRANDE -->
-    <div id="print-vale">
-        <div class="vale-header">
-            <div style="text-align: center; margin-bottom: 20px;">
-                <h2 style="font-size: 48pt; margin: 0; color: #2c3e50; font-weight: bold;">UNIVERSIDAD TAMAULIPECA</h2>
-                <h3 style="font-size: 36pt; margin: 15px 0; color: #7f8c8d; font-weight: normal;">Almacén UT</h3>
-            </div>
-            <h1>VALE DE SALIDA DE MATERIAL</h1>
-            <div class="company-info">
-                <strong>SISTEMA DE CONTROL DE INVENTARIO</strong><br>
-                Vale No. <span id="vale-number" style="font-weight: bold;">001</span> | Fecha de Impresión: <span id="print-date"></span>
-            </div>
-        </div>
-        
-        <div class="vale-info no-break">
-            <div class="info-left">
-                <div class="info-item"><strong>Fecha de Salida:</strong> <span id="f-fec"></span></div>
-                <div class="info-item"><strong>Almacenista:</strong> <span id="f-alm"></span></div>
-            </div>
-            <div class="info-right">
-                <div class="info-item"><strong>Responsable:</strong> <span id="f-rec"></span></div>
-                <div class="info-item"><strong>Proyecto/Orden:</strong> <span id="f-pro"></span></div>
-            </div>
-        </div>
-        
-        <table class="vale-table no-break">
-            <thead>
-                <tr>
-                    <th class="cantidad-col">CANT.</th>
-                    <th class="modelo-col">MODELO</th>
-                    <th class="parte-col">NO. PARTE</th>
-                    <th class="descripcion-col">DESCRIPCIÓN / NOMBRE</th>
-                </tr>
-            </thead>
+    <div id="print-vale" style="display:none; padding: 30px;">
+        <h2 style="text-align:center;">VALE DE SALIDA DE MATERIAL</h2>
+        <p><strong>Fecha:</strong> <span id="f-fec"></span> | <strong>Entrega:</strong> <span id="f-alm"></span></p>
+        <p><strong>Recibe:</strong> <span id="f-rec"></span> | <strong>Proyecto:</strong> <span id="f-pro"></span></p>
+        <table border="1" style="width:100%; border-collapse:collapse; margin-top: 20px;">
+            <thead><tr><th>CANT.</th><th>MODELO</th><th>NO. PARTE</th><th>DESCRIPCIÓN</th></tr></thead>
             <tbody id="f-lista"></tbody>
         </table>
-        
-        <div class="totals">
-            <div class="total-item">Total de Artículos: <span id="total-items">0</span></div>
-            <div class="total-item">Total de Piezas: <span id="total-pieces">0</span></div>
+        <div style="margin-top:80px; display:flex; justify-content:space-around;">
+            <div style="text-align:center; border-top:1px solid #000; width:200px; padding-top: 5px;">Firma Entrega</div>
+            <div style="text-align:center; border-top:1px solid #000; width:200px; padding-top: 5px;">Firma Recibe</div>
         </div>
-        
-        <div class="signature-section no-break">
-            <div class="signature-container">
-                <div class="signature-box">
-                    <div class="signature-line"></div>
-                    <div class="signature-name"><span id="f-alm-sig"></span></div>
-                    <div class="signature-title">Firma Almacén (Entrega)</div>
-                </div>
-                <div class="signature-box">
-                    <div class="signature-line"></div>
-                    <div class="signature-name"><span id="f-rec-sig"></span></div>
-                    <div class="signature-title">Firma Responsable (Recibe)</div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="page-number">Página 1 de 1</div>
     </div>
 
     <script type="module">
@@ -514,123 +159,20 @@
         let productos = [];
         let carrito = [];
         let itemSeleccionado = null;
-        let archivoSeleccionado = null; // Variable para guardar el archivo seleccionado
         const scriptURL = "https://script.google.com/macros/s/AKfycbxaEtN66UYbSOO57Wm9HPrjv7IyfzV8Q3cyZgvDKkKcC8PTohwGaLhznjI3AfP2VTLS/exec";
-
-        window.cerrarSesion = () => { sessionStorage.clear(); window.location.href = 'login.html'; };
 
         // Permisos y UI
         const esAdmin = user.usuario === 'admin';
-        const puedeHacerSalidas = (esAdmin || p.salidas);
-        const puedeSubirImg = (esAdmin || p.subirImagenes);
-
         if(esAdmin || p.registrar) document.getElementById('navReg').style.display = 'block';
         if(esAdmin || p.actualizar) document.getElementById('navAct').style.display = 'block';
         if(esAdmin || p.eliminar) document.getElementById('navEli').style.display = 'block';
         if(esAdmin) document.getElementById('navAdm').style.display = 'block';
+        if(esAdmin || p.subirImagenes) document.getElementById('up-ui').style.display = 'flex';
         
-        if(puedeHacerSalidas) {
+        if(esAdmin || p.salidas) {
             document.getElementById('cart-box').style.display = 'block';
             document.getElementById('th-plus').style.display = 'table-cell';
         }
-
-        // MOSTRAR CONTROLES DE SUBIDA
-        if(puedeSubirImg) {
-            document.getElementById('up-ui').style.display = 'flex';
-        }
-
-        // LÓGICA DE SUBIDA DE IMÁGENES CORREGIDA
-        const fileInput = document.getElementById('fileInput');
-        const btnConfirmUp = document.getElementById('btnConfirmUp');
-        const statusFoto = document.getElementById('status-foto');
-
-        // Cuando se selecciona un archivo
-        fileInput.onchange = (e) => {
-            archivoSeleccionado = e.target.files[0];
-            if(archivoSeleccionado) {
-                btnConfirmUp.style.display = 'block';
-                statusFoto.innerText = `📎 Archivo seleccionado: ${archivoSeleccionado.name}`;
-                statusFoto.style.color = "#3498db";
-            } else {
-                btnConfirmUp.style.display = 'none';
-            }
-        };
-
-        // Cuando se hace clic en "Subir"
-        btnConfirmUp.onclick = async () => {
-            if(!itemSeleccionado) {
-                alert("Selecciona primero un material de la tabla");
-                return;
-            }
-            
-            if(!archivoSeleccionado) {
-                alert("No hay archivo seleccionado");
-                return;
-            }
-            
-            statusFoto.innerText = "🔄 SUBIENDO IMAGEN...";
-            statusFoto.style.color = "#e67e22";
-            btnConfirmUp.disabled = true;
-            
-            const reader = new FileReader();
-            
-            reader.onload = async () => {
-                const base64 = reader.result.split(',')[1];
-                
-                try {
-                    const response = await fetch(scriptURL, {
-                        method: "POST",
-                        headers: {
-                            'Content-Type': 'text/plain',
-                        },
-                        body: JSON.stringify({
-                            action: "upload",
-                            base64: base64,
-                            type: archivoSeleccionado.type,
-                            name: itemSeleccionado.nombre
-                        })
-                    });
-                    
-                    const data = await response.json();
-                    
-                    if(data.result === "success") {
-                        statusFoto.innerText = "✅ ¡Imagen subida exitosamente!";
-                        statusFoto.style.color = "#27ae60";
-                        alert("Imagen guardada en Google Drive correctamente");
-                        
-                        // Limpiar selección
-                        fileInput.value = '';
-                        archivoSeleccionado = null;
-                        btnConfirmUp.style.display = 'none';
-                        
-                        // Recargar la imagen para mostrar la nueva
-                        setTimeout(() => {
-                            mostrarDetalle(itemSeleccionado);
-                        }, 1000);
-                    } else {
-                        statusFoto.innerText = "❌ Error al subir";
-                        statusFoto.style.color = "#e74c3c";
-                        alert("Error: " + (data.message || "Error desconocido"));
-                    }
-                } catch (error) {
-                    console.error("Error en la subida:", error);
-                    statusFoto.innerText = "❌ Error de red";
-                    statusFoto.style.color = "#e74c3c";
-                    alert("Error al subir la imagen: " + error.message);
-                }
-                
-                btnConfirmUp.disabled = false;
-            };
-            
-            reader.onerror = () => {
-                statusFoto.innerText = "❌ Error al leer archivo";
-                statusFoto.style.color = "#e74c3c";
-                alert("Error al leer el archivo");
-                btnConfirmUp.disabled = false;
-            };
-            
-            reader.readAsDataURL(archivoSeleccionado);
-        };
 
         // Firestore Realtime
         onSnapshot(collection(db, "productos"), (snap) => {
@@ -645,16 +187,13 @@
             lista.forEach(item => {
                 const tr = document.createElement('tr');
                 tr.style.cursor = "pointer";
-                
-                // Evento click para mostrar detalles
                 tr.onclick = () => mostrarDetalle(item);
-                
                 tr.innerHTML = `
-                    <td style="display:${puedeHacerSalidas ? 'table-cell' : 'none'}">
-                        <button class="btn-add-item" onclick="event.stopPropagation(); agregar('${item.id}')" style="background: #27ae60; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px;">+</button>
+                    <td style="display:${(esAdmin || p.salidas) ? 'table-cell' : 'none'}">
+                        <button class="btn-add-item" onclick="event.stopPropagation(); agregar('${item.id}')">+</button>
                     </td>
                     <td>${item.modelo || '-'}</td>
-                    <td style="font-weight:bold; color:#0056b3;">${item.noParte || '-'}</td>
+                    <td style="font-weight:bold;">${item.noParte || '-'}</td>
                     <td>${item.nombre || '-'}</td>
                     <td style="text-align:center; font-weight:bold; color:${item.cantidad < 3 ? 'red' : 'black'};">${item.cantidad || 0}</td>
                     <td>${item.laboratorio || '-'}</td>
@@ -667,53 +206,121 @@
 
         async function mostrarDetalle(item) {
             itemSeleccionado = item;
-            const imgPreview = document.getElementById('main-preview-img');
-            const nameDisplay = document.getElementById('prod-name-display');
-            const detailDisplay = document.getElementById('prod-detail-display');
-            
-            // Limpiar selección de archivo anterior
-            fileInput.value = '';
-            archivoSeleccionado = null;
-            btnConfirmUp.style.display = 'none';
-            
-            nameDisplay.innerText = item.nombre || 'Sin nombre';
-            
-            // Mostrar todos los detalles
-            detailDisplay.innerHTML = `
-                <div><b>Modelo:</b> ${item.modelo || '-'}</div>
-                <div><b>No. Parte:</b> ${item.noParte || '-'}</div>
-                <div><b>Laboratorio:</b> ${item.laboratorio || '-'}</div>
-                <div><b>Rack:</b> ${item.rack || '-'}</div>
-                <div><b>Contenedor:</b> ${item.contenedor || '-'}</div>
+            document.getElementById('p-nombre').innerText = item.nombre;
+            document.getElementById('p-detalles').innerHTML = `
+                <div><b>Modelo:</b> ${item.modelo || 'N/A'}</div>
+                <div><b>No. Parte:</b> ${item.noParte || 'N/A'}</div>
+                <div><b>Laboratorio:</b> ${item.laboratorio || 'N/A'}</div>
+                <div><b>Rack:</b> ${item.rack || 'N/A'}</div>
+                <div><b>Contenedor:</b> ${item.contenedor || 'N/A'}</div>
                 <div><b>Costo:</b> $${item.costo || 0}</div>
-                <div><b>Stock disponible:</b> <span style="color: ${item.cantidad < 3 ? 'red' : 'green'}; font-weight: bold;">${item.cantidad || 0} unidades</span></div>
-                <div><b>Observaciones:</b> ${item.observaciones || 'Sin notas.'}</div>
+                <div style="grid-column: span 2;"><b>Observaciones:</b> ${item.observaciones || 'Sin notas.'}</div>
             `;
 
-            statusFoto.innerText = "🔍 Buscando imagen en Drive...";
-            statusFoto.style.color = "#3498db";
-            imgPreview.src = "imagenes/sin_foto.jpg";
-
+            const img = document.getElementById('main-preview-img');
+            const status = document.getElementById('status-foto');
+            status.innerText = "Buscando foto...";
+            
             try {
-                const response = await fetch(`${scriptURL}?action=get&itemName=${encodeURIComponent(item.nombre)}`);
-                const data = await response.json();
-                
-                if(data.result === "success" && data.id) {
-                    imgPreview.src = `https://lh3.googleusercontent.com/u/0/d/${data.id}`;
-                    statusFoto.innerText = "✓ Imagen encontrada en Drive";
-                    statusFoto.style.color = "#27ae60";
+                const res = await fetch(`${scriptURL}?action=get&itemName=${encodeURIComponent(item.nombre)}`);
+                const data = await res.json();
+                if(data.result === "success") {
+                    img.src = `https://lh3.googleusercontent.com/u/0/d/${data.id}`;
+                    status.innerText = "✓ Encontrada en Drive";
                 } else {
-                    imgPreview.src = "imagenes/sin_foto.jpg";
-                    statusFoto.innerText = "📷 Sin foto - Puedes subir una";
-                    statusFoto.style.color = "#e67e22";
+                    img.src = "imagenes/sin_foto.jpg";
+                    status.innerText = "Sin foto";
                 }
-            } catch (error) {
-                console.error("Error al buscar imagen:", error);
-                imgPreview.src = "imagenes/sin_foto.jpg";
-                statusFoto.innerText = "⚠ Error al buscar imagen";
-                statusFoto.style.color = "#e74c3c";
-            }
+            } catch (e) { status.innerText = "Error de red"; }
         }
+
+        // LÓGICA DE SUBIDA
+        const fileInput = document.getElementById('fileInput');
+        const btnConfirmUp = document.getElementById('btnConfirmUp');
+
+        fileInput.onchange = () => {
+            if(fileInput.files[0]) btnConfirmUp.style.display = 'block';
+        };
+
+        btnConfirmUp.onclick = async () => {
+            if(!itemSeleccionado) {
+                alert("❌ Selecciona primero un material de la tabla");
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            if(!file) {
+                alert("❌ No hay archivo seleccionado");
+                return;
+            }
+            
+            const statusFoto = document.getElementById('status-foto');
+            statusFoto.innerText = "🔄 SUBIENDO IMAGEN...";
+            statusFoto.style.color = "#e67e22";
+            btnConfirmUp.disabled = true;
+            
+            const reader = new FileReader();
+            
+            reader.onload = async () => {
+                const base64 = reader.result.split(',')[1];
+                
+                try {
+                    const res = await fetch(scriptURL, {
+                        method: "POST",
+                        headers: {
+                            'Content-Type': 'text/plain',
+                        },
+                        body: JSON.stringify({
+                            base64: base64,
+                            type: file.type,
+                            name: itemSeleccionado.nombre
+                        })
+                    });
+                    
+                    const d = await res.json();
+                    
+                    if(d.result === "success") {
+                        statusFoto.innerText = "✅ ¡Imagen subida exitosamente!";
+                        statusFoto.style.color = "#27ae60";
+                        alert("✅ Imagen guardada en Google Drive correctamente");
+                        
+                        // Actualizar la imagen inmediatamente
+                        if(d.id) {
+                            document.getElementById('main-preview-img').src = `https://lh3.googleusercontent.com/u/0/d/${d.id}`;
+                        }
+                        
+                        // Limpiar selección
+                        fileInput.value = '';
+                        btnConfirmUp.style.display = 'none';
+                        
+                        // Recargar detalles después de un momento
+                        setTimeout(() => {
+                            mostrarDetalle(itemSeleccionado);
+                        }, 500);
+                    } else {
+                        statusFoto.innerText = "❌ Error al subir";
+                        statusFoto.style.color = "#e74c3c";
+                        alert("❌ Error: " + (d.message || "Error desconocido"));
+                    }
+                } catch (e) { 
+                    console.error("Error al subir:", e);
+                    statusFoto.innerText = "❌ Error de red";
+                    statusFoto.style.color = "#e74c3c";
+                    alert("❌ Error al subir: " + e.message); 
+                }
+                
+                btnConfirmUp.disabled = false;
+            };
+            
+            reader.onerror = () => {
+                statusFoto.innerText = "❌ Error al leer archivo";
+                statusFoto.style.color = "#e74c3c";
+                alert("❌ Error al leer el archivo");
+                btnConfirmUp.disabled = false;
+            };
+            
+            reader.readAsDataURL(file);
+        };
 
         // Carrito y Salidas
         window.agregar = (id) => {
@@ -722,13 +329,13 @@
             
             if(enCarro) {
                 if(enCarro.cOut + 1 > prod.cantidad) {
-                    alert(`No hay suficiente stock. Disponible: ${prod.cantidad} unidades`);
+                    alert(`❌ No hay suficiente stock. Disponible: ${prod.cantidad} unidades`);
                     return;
                 }
                 enCarro.cOut++;
             } else {
                 if(prod.cantidad < 1) {
-                    alert("Producto sin stock disponible");
+                    alert("❌ Producto sin stock disponible");
                     return;
                 }
                 carrito.push({...prod, cOut: 1});
@@ -737,13 +344,12 @@
         };
 
         function dibujarCarrito() {
-            const box = document.getElementById('cart-list');
-            if (carrito.length === 0) {
-                box.innerHTML = '<i>Vacío - Agrega productos con el botón "+"</i>';
-                return;
+            const list = document.getElementById('cart-list');
+            if(carrito.length === 0) { 
+                list.innerHTML = "<i>Vacío - Agrega productos con el botón '+'</i>"; 
+                return; 
             }
-            
-            box.innerHTML = carrito.map((item, i) => `
+            list.innerHTML = carrito.map((item, i) => `
                 <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee; padding:6px 0;">
                     <div style="font-size:12px;">
                         ${item.nombre} 
@@ -758,9 +364,9 @@
             const r = document.getElementById('recep').value.trim();
             const py = document.getElementById('proyec').value.trim();
             
-            if(!r) return alert("Por favor, ingresa el nombre de quien recibe");
-            if(!py) return alert("Por favor, ingresa el proyecto u orden");
-            if(carrito.length === 0) return alert("El carrito está vacío. Agrega productos primero");
+            if(!r) return alert("❌ Por favor, ingresa el nombre de quien recibe");
+            if(!py) return alert("❌ Por favor, ingresa el proyecto u orden");
+            if(carrito.length === 0) return alert("❌ El carrito está vacío. Agrega productos primero");
 
             if(confirm("¿Confirmar la salida de material y generar el vale?")) {
                 try {
@@ -795,7 +401,7 @@
                     let totalItems = 0;
                     let totalPieces = 0;
                     
-                    const tableRows = carrito.map((item, index) => {
+                    const tableRows = carrito.map((item) => {
                         totalItems++;
                         totalPieces += item.cOut;
                         
@@ -830,7 +436,7 @@
                     
                 } catch (e) { 
                     console.error("Error al procesar la salida:", e);
-                    alert("Error al procesar la salida. Verifica la conexión."); 
+                    alert("❌ Error al procesar la salida. Verifica la conexión."); 
                 }
             }
         };
@@ -841,8 +447,7 @@
             renderTable(productos.filter(p => 
                 (p.nombre||'').toLowerCase().includes(t) || 
                 (p.noParte||'').toLowerCase().includes(t) || 
-                (p.modelo||'').toLowerCase().includes(t) ||
-                (p.laboratorio||'').toLowerCase().includes(t)
+                (p.modelo||'').toLowerCase().includes(t)
             ));
         };
     </script>
