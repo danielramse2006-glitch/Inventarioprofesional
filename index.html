@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8"><title>Inventario - Panel Principal</title>
+    <meta charset="UTF-8">
+    <title>Inventario - Panel Principal</title>
     <link rel="stylesheet" href="style.css">
     <style>
         /* Bloqueo de scroll general para scroll interno en tabla */
@@ -62,7 +63,7 @@
         }
         #main-preview-img { max-width: 100%; max-height: 150px; object-fit: contain; border-radius: 5px; }
 
-        /* Lógica de botones de subida */
+        /* Botones de subida */
         .upload-controls { margin-top: 10px; display: flex; gap: 8px; justify-content: center; }
         .btn-sel { background: #7f8c8d; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; }
         .btn-up { background: #27ae60; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; display: none; }
@@ -222,16 +223,22 @@
             status.innerText = "Buscando foto...";
             
             try {
+                // Buscamos el ID de la imagen en Drive mediante el scriptURL
                 const res = await fetch(`${scriptURL}?itemName=${encodeURIComponent(item.nombre)}`);
                 const data = await res.json();
-                if(data.result === "success") {
+                
+                if(data.result === "success" && data.id) {
+                    // Usamos el formato de miniatura de Drive que funciona universalmente
                     img.src = `https://drive.google.com/thumbnail?id=${data.id}&sz=w1000`;
                     status.innerText = "✓ Encontrada en Drive";
                 } else {
                     img.src = "imagenes/sin_foto.jpg";
                     status.innerText = "Sin foto";
                 }
-            } catch (e) { status.innerText = "Error de red"; }
+            } catch (e) { 
+                img.src = "imagenes/sin_foto.jpg";
+                status.innerText = "Error de red"; 
+            }
         }
 
         // LÓGICA DE SUBIDA
@@ -243,81 +250,36 @@
         };
 
         btnConfirmUp.onclick = async () => {
-            if(!itemSeleccionado) {
-                alert("❌ Selecciona primero un material de la tabla");
-                return;
-            }
+            if(!itemSeleccionado) return alert("Selecciona un material primero");
             
             const file = fileInput.files[0];
-            if(!file) {
-                alert("❌ No hay archivo seleccionado");
-                return;
-            }
-            
             const statusFoto = document.getElementById('status-foto');
-            statusFoto.innerText = "🔄 SUBIENDO IMAGEN...";
-            statusFoto.style.color = "#e67e22";
+            statusFoto.innerText = "SUBIENDO...";
             btnConfirmUp.disabled = true;
-            
+
             const reader = new FileReader();
-            
             reader.onload = async () => {
                 const base64 = reader.result.split(',')[1];
-                
                 try {
                     const res = await fetch(scriptURL, {
                         method: "POST",
-                        headers: {
-                            'Content-Type': 'text/plain',
-                        },
                         body: JSON.stringify({
                             itemName: itemSeleccionado.nombre,
                             imageB64: base64
                         })
                     });
-                    
                     const d = await res.json();
-                    
                     if(d.result === "success") {
-                        statusFoto.innerText = "✅ ¡Imagen subida exitosamente!";
-                        statusFoto.style.color = "#27ae60";
-                        alert("✅ Imagen guardada en Google Drive correctamente");
-                        
-                        // Actualizar la imagen inmediatamente
-                        if(d.id) {
-                            document.getElementById('main-preview-img').src = `https://drive.google.com/thumbnail?id=${d.id}&sz=w1000`;
-                        }
-                        
-                        // Limpiar selección
-                        fileInput.value = '';
+                        alert("¡Imagen guardada en Drive!");
                         btnConfirmUp.style.display = 'none';
-                        
-                        // Recargar detalles después de un momento
-                        setTimeout(() => {
-                            mostrarDetalle(itemSeleccionado);
-                        }, 500);
+                        fileInput.value = '';
+                        mostrarDetalle(itemSeleccionado); // Recargar visor
                     } else {
-                        statusFoto.innerText = "❌ Error al subir";
-                        statusFoto.style.color = "#e74c3c";
-                        alert("❌ Error: " + (d.error || d.message || "Error desconocido"));
+                        alert("Error: " + d.message);
                     }
-                } catch (e) { 
-                    console.error("Error al subir:", e);
-                    statusFoto.innerText = "❌ Error de red";
-                    statusFoto.style.color = "#e74c3c";
-                    alert("❌ Error al subir: " + e.message); 
-                }
-                
+                } catch (e) { alert("Error al conectar con el servidor"); }
                 btnConfirmUp.disabled = false;
             };
-            
-            reader.onerror = () => {
-                statusFoto.innerText = "❌ Error al leer archivo";
-                statusFoto.style.color = "#e74c3c";
-                alert("❌ Error al leer el archivo");
-                btnConfirmUp.disabled = false;
-            };
-            
             reader.readAsDataURL(file);
         };
 
@@ -327,16 +289,10 @@
             const enCarro = carrito.find(x => x.id === id);
             
             if(enCarro) {
-                if(enCarro.cOut + 1 > prod.cantidad) {
-                    alert(`❌ No hay suficiente stock. Disponible: ${prod.cantidad} unidades`);
-                    return;
-                }
+                if(enCarro.cOut + 1 > prod.cantidad) return alert("Stock insuficiente");
                 enCarro.cOut++;
             } else {
-                if(prod.cantidad < 1) {
-                    alert("❌ Producto sin stock disponible");
-                    return;
-                }
+                if(prod.cantidad < 1) return alert("Sin stock");
                 carrito.push({...prod, cOut: 1});
             }
             dibujarCarrito();
@@ -344,99 +300,38 @@
 
         function dibujarCarrito() {
             const list = document.getElementById('cart-list');
-            if(carrito.length === 0) { 
-                list.innerHTML = "<i>Vacío - Agrega productos con el botón '+'</i>"; 
-                return; 
-            }
+            if(carrito.length === 0) { list.innerHTML = "<i>Vacío</i>"; return; }
             list.innerHTML = carrito.map((item, i) => `
-                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee; padding:6px 0;">
-                    <div style="font-size:12px;">
-                        ${item.nombre} 
-                        <span style="color:#e67e22; font-weight:bold;">(${item.cOut})</span>
-                    </div>
-                    <button onclick="carrito.splice(${i},1); dibujarCarrito();" style="border:none; color:red; background:none; cursor:pointer; font-size:14px;">✕</button>
+                <div style="border-bottom:1px solid #eee; padding:3px; display:flex; justify-content:space-between; align-items:center; color:black;">
+                    <span style="font-size:11px;">${item.nombre} <b>(${item.cOut})</b></span>
+                    <button onclick="carrito.splice(${i},1); dibujarCarrito();" style="color:red; border:none; background:none; cursor:pointer;">✕</button>
                 </div>
             `).join('');
         }
 
         window.procesarSalida = async () => {
-            const r = document.getElementById('recep').value.trim();
-            const py = document.getElementById('proyec').value.trim();
-            
-            if(!r) return alert("❌ Por favor, ingresa el nombre de quien recibe");
-            if(!py) return alert("❌ Por favor, ingresa el proyecto u orden");
-            if(carrito.length === 0) return alert("❌ El carrito está vacío. Agrega productos primero");
+            const r = document.getElementById('recep').value;
+            const py = document.getElementById('proyec').value;
+            if(!r || !py || carrito.length === 0) return alert("Faltan datos o el carrito está vacío");
 
-            if(confirm("¿Confirmar la salida de material y generar el vale?")) {
-                try {
-                    const now = new Date();
-                    
-                    document.getElementById('f-fec').innerText = now.toLocaleDateString('es-ES', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                    });
-                    document.getElementById('f-alm').innerText = user.usuario;
-                    document.getElementById('f-rec').innerText = r;
-                    document.getElementById('f-pro').innerText = py;
-                    
-                    document.getElementById('f-alm-sig').innerText = user.usuario;
-                    document.getElementById('f-rec-sig').innerText = r;
-                    
-                    document.getElementById('print-date').innerText = now.toLocaleDateString('es-ES', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    });
-                    
-                    const valeNumber = 'VALE-' + now.getFullYear() + '-' + 
-                        String(now.getMonth() + 1).padStart(2, '0') + '-' + 
-                        String(now.getDate()).padStart(2, '0') + '-' +
-                        String(Math.floor(Math.random() * 1000)).padStart(3, '0');
-                    document.getElementById('vale-number').innerText = valeNumber;
-                    
-                    let totalItems = 0;
-                    let totalPieces = 0;
-                    
-                    const tableRows = carrito.map((item) => {
-                        totalItems++;
-                        totalPieces += item.cOut;
-                        
-                        return `
-                            <tr>
-                                <td class="cantidad-col" style="text-align:center; font-weight:bold;">${item.cOut} PZ</td>
-                                <td class="modelo-col">${item.modelo || '-'}</td>
-                                <td class="parte-col" style="font-weight:bold;">${item.noParte || '-'}</td>
-                                <td class="descripcion-col">${item.nombre || '-'}</td>
-                            </tr>
-                        `;
-                    }).join('');
-                    
-                    document.getElementById('f-lista').innerHTML = tableRows;
-                    document.getElementById('total-items').innerText = totalItems;
-                    document.getElementById('total-pieces').innerText = totalPieces;
+            if(confirm("¿Generar vale y descontar stock?")) {
+                document.getElementById('f-fec').innerText = new Date().toLocaleDateString();
+                document.getElementById('f-alm').innerText = user.usuario;
+                document.getElementById('f-rec').innerText = r;
+                document.getElementById('f-pro').innerText = py;
+                document.getElementById('f-lista').innerHTML = carrito.map(i => `
+                    <tr><td>${i.cOut} PZ</td><td>${i.modelo}</td><td>${i.noParte}</td><td>${i.nombre}</td></tr>
+                `).join('');
 
-                    for (const item of carrito) {
-                        await updateDoc(doc(db, "productos", item.id), { 
-                            cantidad: increment(-item.cOut) 
-                        });
-                    }
-
-                    setTimeout(() => {
-                        window.print();
-                    }, 500);
-                    
-                    carrito = []; 
-                    dibujarCarrito();
-                    document.getElementById('recep').value = ''; 
-                    document.getElementById('proyec').value = '';
-                    
-                } catch (e) { 
-                    console.error("Error al procesar la salida:", e);
-                    alert("❌ Error al procesar la salida. Verifica la conexión."); 
+                for (const item of carrito) {
+                    await updateDoc(doc(db, "productos", item.id), { cantidad: increment(-item.cOut) });
                 }
+                
+                window.print();
+                carrito = []; 
+                dibujarCarrito();
+                document.getElementById('recep').value = ''; 
+                document.getElementById('proyec').value = '';
             }
         };
 
