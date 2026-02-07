@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>Inventario - Panel Principal</title>
+    <meta charset="UTF-8"><title>Inventario - Panel Principal</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        body, html { height: 100%; margin: 0; overflow: hidden; background-color: #0080ff; font-family: sans-serif; }
+        /* Bloqueo de scroll general */
+        body, html { height: 100%; margin: 0; overflow: hidden; background-color: #0080ff; font-family: sans-serif; color: black; }
         
         .main-container { 
             display: flex; 
-            height: calc(100vh - 250px);
+            height: calc(100vh - 320px); /* Ajustado para el visor más grande */
             padding: 15px; 
             gap: 15px; 
             box-sizing: border-box;
@@ -27,93 +27,55 @@
         }
         .table-wrapper { flex: 1; overflow-y: auto; border: 1px solid #ddd; }
         
-        table, .bottom-preview { color: black !important; }
-        th { color: white !important; background-color: #2c3e50; }
+        table { color: black !important; width: 100%; border-collapse: collapse; }
+        th { color: white !important; background-color: #2c3e50; position: sticky; top: 0; z-index: 10; }
 
-        /* --- VISOR INFERIOR FIJO --- */
+        /* --- VISOR INFERIOR GRANDE --- */
         .bottom-preview {
             position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
+            bottom: 0; left: 0; right: 0;
             background: white;
             border-top: 5px solid #3498db;
-            padding: 15px 30px;
+            padding: 20px 40px;
             display: flex;
             align-items: center;
-            gap: 40px;
-            height: 250px;
+            gap: 50px;
+            height: 320px; /* MÁS GRANDE */
             box-shadow: 0 -5px 25px rgba(0,0,0,0.3);
             z-index: 1000;
             box-sizing: border-box;
+            color: black !important;
         }
 
         .preview-image-box { 
-            flex: 0 0 220px; 
+            flex: 0 0 280px; 
             text-align: center; 
             height: 100%; 
             display: flex; 
             flex-direction: column; 
             justify-content: center; 
-            border-right: 1px solid #eee;
-            padding-right: 20px;
+            border-right: 2px solid #eee;
+            padding-right: 30px;
         }
-        #main-preview-img { max-width: 100%; max-height: 150px; object-fit: contain; border-radius: 5px; }
+        #main-preview-img { max-width: 100%; max-height: 220px; object-fit: contain; border-radius: 8px; }
 
-        /* Controles de subida actualizados */
-        .upload-controls { 
-            margin-top: 10px; 
-            display: none; 
-            flex-direction: column;
-            gap: 5px;
-        }
-        .upload-controls.active { display: flex; }
-        .btn-sel { 
-            background: #7f8c8d; 
-            color: white; 
-            border: none; 
-            padding: 6px 12px; 
-            border-radius: 4px; 
-            cursor: pointer; 
-            font-size: 12px; 
-            font-weight: bold; 
-        }
-        .btn-up { 
-            background: #27ae60; 
-            color: white; 
-            border: none; 
-            padding: 6px 12px; 
-            border-radius: 4px; 
-            cursor: pointer; 
-            font-size: 12px; 
-            font-weight: bold; 
-            display: none; 
-        }
-        .btn-up:hover { background: #2ecc71; }
+        .upload-controls { margin-top: 15px; display: flex; gap: 10px; justify-content: center; }
+        .btn-sel { background: #7f8c8d; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold; }
+        .btn-up { background: #27ae60; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold; display: none; }
 
         .preview-info-box { flex: 1; overflow-y: auto; height: 100%; }
-        .preview-info-box h2 { margin-top: 0; color: #2c3e50; }
+        .preview-info-box h2 { margin: 0 0 10px 0; color: #2c3e50; font-size: 24px; }
 
-        .cart-box { background: #fff; padding: 10px; border-radius: 6px; border: 1px solid #ccc; margin-top: 15px; color: black; }
-        
-        /* Estilos para impresión */
-        #print-vale { display: none; }
+        /* ESTILO IMPRESIÓN VALE */
         @media print {
-            body * { visibility: hidden; }
-            #print-vale, #print-vale * { visibility: visible; }
-            #print-vale { 
-                display: block; 
-                position: absolute; 
-                left: 0; 
-                top: 0; 
-                width: 100%; 
-                padding: 30px; 
-                color: black; 
-            }
-            .vale-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
-            .vale-table th, .vale-table td { border: 1px solid #000; padding: 8px; text-align: left; }
-            .pzas-col { background: #eee !important; font-weight: bold; text-align: center; width: 80px; }
-            .bottom-preview, .side-menu, #mainSearch, header { display: none !important; }
+            body { background: white !important; overflow: visible !important; }
+            .bottom-preview, .side-menu, #mainSearch, header, .main-container { display: none !important; }
+            #print-vale { display: block !important; width: 100%; color: black; }
+            table { width: 100% !important; border: 1px solid black !important; }
+            th, td { border: 1px solid black !important; padding: 8px; font-size: 12px; }
+            .col-cant { width: 60px; text-align: center; }
+            .col-mod { width: 120px; }
+            .col-np { width: 120px; }
         }
     </style>
 </head>
@@ -127,24 +89,24 @@
             <button id="navEli" style="display:none;" onclick="location.href='eliminar.html'">Eliminar</button>
             <button id="navAdm" style="display:none; background:#f1c40f;" onclick="location.href='usuarios.html'">Usuarios</button>
             
-            <div id="cart-box" class="cart-box">
-                <h4 style="margin:0; text-align:center;">📋 VALE</h4>
-                <div id="cart-list" style="margin: 10px 0; font-size: 0.8em; max-height: 80px; overflow-y:auto;"><i>Vacío</i></div>
-                <input type="text" id="recep" placeholder="¿Quién recibe?" style="width:90%; margin-bottom: 5px;">
-                <input type="text" id="proyec" placeholder="Proyecto" style="width:90%;">
-                <button onclick="procesarSalida()" style="width:100%; background:#e67e22; color:white; border:none; padding:8px; margin-top:5px; cursor:pointer; font-weight:bold;">GENERAR VALE</button>
+            <div id="cart-box" class="cart-box" style="background:white; padding:10px; border-radius:8px; border:1px solid #ccc; display:none;">
+                <h4 style="margin:0; text-align:center; color:black;">📋 VALE</h4>
+                <div id="cart-list" style="margin: 10px 0; font-size: 12px; max-height: 80px; overflow-y:auto; color:black;"><i>Vacío</i></div>
+                <input type="text" id="recep" placeholder="¿Quién recibe?" style="width:90%; margin-bottom:5px; padding:5px;">
+                <input type="text" id="proyec" placeholder="Proyecto" style="width:90%; padding:5px;">
+                <button onclick="procesarSalida()" style="width:100%; background:#e67e22; color:white; border:none; padding:10px; margin-top:10px; font-weight:bold; cursor:pointer;">GENERAR</button>
             </div>
-            <button class="btn-logout" style="background:#c0392b; color:white; padding: 10px; border: none; border-radius: 4px; cursor: pointer; margin-top: auto;" onclick="cerrarSesion()">Cerrar Sesión</button>
+            <button class="btn-logout" style="background:#c0392b; color:white; padding:12px; border:none; border-radius:4px; margin-top:auto;" onclick="sessionStorage.clear(); location.href='login.html'">Salir</button>
         </nav>
 
         <section class="content">
             <input type="text" id="mainSearch" placeholder="🔍 Buscar por modelo, nombre o no. parte..." style="width:100%; padding:12px; border-radius:5px; border:1px solid #ddd; box-sizing: border-box;">
             <div class="table-wrapper">
-                <table>
+                <table id="main-table">
                     <thead>
                         <tr>
                             <th id="th-plus" style="display:none;">+</th>
-                            <th>Modelo</th><th>No. Parte</th><th>Nombre</th><th>Stock</th><th>Laboratorio</th><th>Rack</th><th>Contenedor</th>
+                            <th>Modelo</th><th>No. Parte</th><th>Nombre</th><th>Stock</th><th>Laboratorio</th><th>Rack</th>
                         </tr>
                     </thead>
                     <tbody id="inventory-body"></tbody>
@@ -155,49 +117,44 @@
 
     <div class="bottom-preview">
         <div class="preview-image-box">
-            <span id="status-foto" style="font-size:11px; color:#2980b9; font-weight:bold; margin-bottom:5px;">Selecciona un material</span>
-            <img id="main-preview-img" src="imagenes/sin_foto.jpg" alt="Vista previa">
-            
-            <div class="upload-controls" id="upload-box-drive">
-                <input type="file" id="fileDrive" accept="image/*" style="font-size:10px; width:100%;">
-                <button id="btnSubirDrive" class="btn-up">🚀 Subir a Drive</button>
+            <span id="status-foto" style="font-size:12px; color:#2980b9; font-weight:bold; margin-bottom:10px;">Selecciona un material</span>
+            <img id="main-preview-img" src="imagenes/sin_foto.jpg">
+            <div class="upload-controls" id="up-ui" style="display:none;">
+                <button class="btn-sel" onclick="document.getElementById('fileInput').click()">📁 Elegir</button>
+                <button id="btnConfirmUp" class="btn-up">🚀 Subir</button>
+                <input type="file" id="fileInput" accept="image/*" style="display:none;">
             </div>
         </div>
 
         <div class="preview-info-box">
-            <h2 id="prod-name-display">Detalles del Material</h2>
+            <h2 id="p-nombre">Detalles del Material</h2>
             <hr>
-            <div id="prod-detail-display" style="font-size: 14px;">
-                Haz clic en una fila para ver la información.
+            <div id="p-detalles" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; font-size: 15px;">
+                Selecciona una fila de la tabla para ver toda la información.
             </div>
         </div>
     </div>
 
-    <div id="print-vale">
-        <h1 style="text-align:center;">VALE DE SALIDA DE MATERIAL</h1>
-        <hr>
-        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-            <p><strong>Fecha:</strong> <span id="f-fec"></span></p>
-            <p><strong>Almacenista:</strong> <span id="f-alm"></span></p>
+    <div id="print-vale" style="display:none;">
+        <div style="text-align:center; border-bottom: 2px solid black; padding-bottom:10px; margin-bottom:20px;">
+            <h2 style="margin:0;">VALE DE SALIDA DE MATERIAL</h2>
         </div>
-        <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
-            <p><strong>Recibe:</strong> <span id="f-rec"></span></p>
-            <p><strong>Proyecto:</strong> <span id="f-pro"></span></p>
-        </div>
-        <table class="vale-table">
+        <p><strong>Fecha:</strong> <span id="f-fec"></span> | <strong>Entrega:</strong> <span id="f-alm"></span></p>
+        <p><strong>Recibe:</strong> <span id="f-rec"></span> | <strong>Proyecto:</strong> <span id="f-pro"></span></p>
+        <table border="1">
             <thead>
                 <tr>
-                    <th class="pzas-col">CANT.</th>
-                    <th>MODELO</th>
-                    <th>NO. PARTE</th>
+                    <th class="col-cant">CANT.</th>
+                    <th class="col-mod">MODELO</th>
+                    <th class="col-np">NO. PARTE</th>
                     <th>DESCRIPCIÓN / NOMBRE</th>
                 </tr>
             </thead>
             <tbody id="f-lista"></tbody>
         </table>
-        <div style="margin-top:100px; display:flex; justify-content:space-around;">
-            <p style="border-top:1px solid #000; width:220px; text-align:center; padding-top:5px;">Firma Almacén (Entrega)</p>
-            <p style="border-top:1px solid #000; width:220px; text-align:center; padding-top:5px;">Firma Responsable (Recibe)</p>
+        <div style="margin-top:80px; display:flex; justify-content:space-around;">
+            <div style="text-align:center; border-top:1px solid black; width:220px; padding-top:5px;">Firma Entrega</div>
+            <div style="text-align:center; border-top:1px solid black; width:220px; padding-top:5px;">Firma Recibe</div>
         </div>
     </div>
 
@@ -209,31 +166,21 @@
         const p = user.permisos || {};
         let productos = [];
         let carrito = [];
-        let itemSeleccionado = null;
+        let itemSel = null;
         const scriptURL = "https://script.google.com/macros/s/AKfycbxaEtN66UYbSOO57Wm9HPrjv7IyfzV8Q3cyZgvDKkKcC8PTohwGaLhznjI3AfP2VTLS/exec";
 
-        window.cerrarSesion = () => { sessionStorage.clear(); window.location.href = 'login.html'; };
-
-        // Permisos y UI
+        // Permisos
         const esAdmin = user.usuario === 'admin';
-        const puedeHacerSalidas = (esAdmin || p.salidas);
-        const puedeSubirImg = (esAdmin || p.subirImagenes);
-
         if(esAdmin || p.registrar) document.getElementById('navReg').style.display = 'block';
         if(esAdmin || p.actualizar) document.getElementById('navAct').style.display = 'block';
         if(esAdmin || p.eliminar) document.getElementById('navEli').style.display = 'block';
         if(esAdmin) document.getElementById('navAdm').style.display = 'block';
-        
-        if(puedeHacerSalidas) {
+        if(esAdmin || p.subirImagenes) document.getElementById('up-ui').style.display = 'flex';
+        if(esAdmin || p.salidas) {
             document.getElementById('cart-box').style.display = 'block';
             document.getElementById('th-plus').style.display = 'table-cell';
         }
 
-        if(puedeSubirImg) {
-            document.getElementById('upload-box-drive').classList.add('active');
-        }
-
-        // Firestore Realtime
         onSnapshot(collection(db, "productos"), (snap) => {
             productos = [];
             snap.forEach(d => productos.push({...d.data(), id: d.id}));
@@ -246,173 +193,104 @@
             lista.forEach(item => {
                 const tr = document.createElement('tr');
                 tr.style.cursor = "pointer";
-                
-                // Evento click para mostrar detalles
-                tr.onclick = async () => {
-                    const nombreFoto = (item.nombre || "sin_nombre").trim();
-                    const imgPreview = document.getElementById('main-preview-img');
-                    const nameDisplay = document.getElementById('prod-name-display');
-                    const detailDisplay = document.getElementById('prod-detail-display');
-                    const statusFoto = document.getElementById('status-foto');
-                    
-                    // Resaltado visual de fila seleccionada
-                    document.querySelectorAll('#inventory-body tr').forEach(r => r.style.background = "");
-                    tr.style.background = "#e3f2fd";
-
-                    itemSeleccionado = item;
-                    nameDisplay.innerText = item.nombre || 'Sin nombre';
-                    
-                    // Mostrar todos los detalles incluyendo los campos adicionales
-                    detailDisplay.innerHTML = `
-                        <div><b>Modelo:</b> ${item.modelo || '-'}</div>
-                        <div><b>No. Parte:</b> ${item.noParte || '-'}</div>
-                        <div><b>Laboratorio:</b> ${item.laboratorio || '-'}</div>
-                        <div><b>Rack:</b> ${item.rack || '-'}</div>
-                        <div><b>Contenedor:</b> ${item.contenedor || '-'}</div>
-                        <div><b>Costo:</b> $${item.costo || 0}</div>
-                        <div><b>Stock:</b> ${item.cantidad || 0}</div>
-                        <div><b>Observaciones:</b> ${item.observaciones || 'Sin notas.'}</div>
-                    `;
-
-                    statusFoto.innerText = "Buscando en Drive...";
-                    imgPreview.src = "imagenes/sin_foto.jpg";
-
-                    try {
-                        const response = await fetch(`${scriptURL}?itemName=${encodeURIComponent(nombreFoto)}`);
-                        const data = await response.json();
-                        if(data.result === "success" && data.id) {
-                            imgPreview.src = `https://lh3.googleusercontent.com/u/0/d/${data.id}`;
-                            statusFoto.innerText = "Cargada desde Google Drive";
-                        } else {
-                            imgPreview.src = `imagenes/${nombreFoto}.jpg`;
-                            statusFoto.innerText = "Local / Sin foto en Drive";
-                            imgPreview.onerror = () => { 
-                                imgPreview.src = 'imagenes/sin_foto.jpg'; 
-                                statusFoto.innerText = ""; 
-                            };
-                        }
-                    } catch (e) {
-                        imgPreview.src = `imagenes/${nombreFoto}.jpg`;
-                        statusFoto.innerText = "";
-                    }
-
-                    if(puedeSubirImg) {
-                        document.getElementById('btnSubirDrive').onclick = () => subirADrive(nombreFoto);
-                        document.getElementById('btnSubirDrive').style.display = 'block';
-                    }
-                };
-
+                tr.onclick = () => mostrarDetalle(item);
                 tr.innerHTML = `
-                    <td style="display:${puedeHacerSalidas ? 'table-cell' : 'none'}">
-                        <button class="btn-add-item" onclick="event.stopPropagation(); agregar('${item.id}')" style="background: #27ae60; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-weight: bold;">+</button>
+                    <td style="display:${(esAdmin || p.salidas) ? 'table-cell' : 'none'}">
+                        <button class="btn-add-item" onclick="event.stopPropagation(); agregar('${item.id}')">+</button>
                     </td>
                     <td>${item.modelo || '-'}</td>
-                    <td style="font-weight:bold; color:#0056b3;">${item.noParte || '-'}</td>
+                    <td style="font-weight:bold;">${item.noParte || '-'}</td>
                     <td>${item.nombre || '-'}</td>
-                    <td style="text-align:center; font-weight:bold; color:${item.cantidad < 3 ? 'red' : 'black'};">${item.cantidad || 0}</td>
+                    <td style="text-align:center; font-weight:bold;">${item.cantidad || 0}</td>
                     <td>${item.laboratorio || '-'}</td>
                     <td>${item.rack || '-'}</td>
-                    <td>${item.contenedor || '-'}</td>
                 `;
                 tbody.appendChild(tr);
             });
         }
 
-        // LÓGICA DE SUBIDA DE IMÁGENES (del index2.html)
-        async function subirADrive(nombreProducto) {
-            const fileInput = document.getElementById('fileDrive');
-            const file = fileInput.files[0];
-            if(!file) return alert("Selecciona una imagen");
+        async function mostrarDetalle(item) {
+            itemSel = item;
+            document.getElementById('p-nombre').innerText = item.nombre;
+            document.getElementById('p-detalles').innerHTML = `
+                <div><b>No. Parte:</b> ${item.noParte || 'N/A'}</div>
+                <div><b>Modelo:</b> ${item.modelo || 'N/A'}</div>
+                <div><b>Lab:</b> ${item.laboratorio || 'N/A'}</div>
+                <div><b>Rack/Contenedor:</b> ${item.rack || 'N/A'} / ${item.contenedor || 'N/A'}</div>
+                <div><b>Ubicación:</b> ${item.ubicacion || 'N/A'}</div>
+                <div><b>Lote:</b> ${item.lote || 'N/A'}</div>
+                <div style="grid-column: span 2;"><b>Notas:</b> ${item.observaciones || 'Sin notas.'}</div>
+            `;
+            const img = document.getElementById('main-preview-img');
+            const status = document.getElementById('status-foto');
+            status.innerText = "Buscando foto...";
+            try {
+                const res = await fetch(`${scriptURL}?itemName=${encodeURIComponent(item.nombre)}`);
+                const data = await res.json();
+                img.src = (data.result === "success") ? `https://lh3.googleusercontent.com/u/0/d/$${data.id}` : "imagenes/sin_foto.jpg";
+                status.innerText = (data.result === "success") ? "✓ Foto Vinculada" : "Sin foto en Drive";
+            } catch (e) { status.innerText = "Error Drive"; }
+        }
 
+        // Subida de imagen
+        const fileIn = document.getElementById('fileInput');
+        const btnUp = document.getElementById('btnConfirmUp');
+        fileIn.onchange = () => { if(fileIn.files[0]) btnUp.style.display = 'block'; };
+        btnUp.onclick = async () => {
+            if(!itemSel) return;
+            const file = fileIn.files[0];
             const reader = new FileReader();
             reader.readAsDataURL(file);
             reader.onload = async () => {
-                const base64 = reader.result.split(',')[1];
-                const btn = document.getElementById('btnSubirDrive');
-                btn.innerText = "Subiendo...";
-                btn.disabled = true;
+                document.getElementById('status-foto').innerText = "SUBIENDO...";
+                btnUp.disabled = true;
                 try {
                     const res = await fetch(scriptURL, {
                         method: "POST",
-                        body: JSON.stringify({ itemName: nombreProducto, imageB64: base64 })
+                        body: JSON.stringify({ base64: reader.result.split(',')[1], type: file.type, name: itemSel.nombre })
                     });
-                    const data = await res.json();
-                    if(data.result === "success") {
-                        alert("Foto actualizada en Drive");
-                        document.getElementById('main-preview-img').src = `https://lh3.googleusercontent.com/u/0/d/${data.id}`;
-                        document.getElementById('status-foto').innerText = "Actualizada en Drive";
-                    }
-                } catch(e) { 
-                    alert("Error al subir"); 
-                }
-                btn.innerText = "🚀 Subir a Drive";
-                btn.disabled = false;
+                    const d = await res.json();
+                    if(d.result === "success") { alert("¡Subido!"); btnUp.style.display = 'none'; mostrarDetalle(itemSel); }
+                } catch (e) { alert("Error"); }
+                btnUp.disabled = false;
             };
-        }
+        };
 
-        // Carrito y Salidas (del index2.html mejorado)
         window.agregar = (id) => {
-            const prod = productos.find(x => x.id === id);
-            const enCarro = carrito.find(x => x.id === id);
-            if(enCarro) {
-                if(enCarro.cOut + 1 > prod.cantidad) return alert("Sin stock");
-                enCarro.cOut++;
-            } else {
-                if(prod.cantidad < 1) return alert("Sin stock");
-                carrito.push({...prod, cOut: 1});
-            }
-            dibujarCarrito();
+            const p = productos.find(x => x.id === id);
+            if(p.cantidad < 1) return alert("Sin stock");
+            carrito.push(p); dibujarCarrito();
         };
 
         function dibujarCarrito() {
-            const box = document.getElementById('cart-list');
-            box.innerHTML = carrito.length === 0 ? '<i>Vacío</i>' : 
-                carrito.map((item, i) => `
-                    <div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding:3px 0;">
-                        <span style="font-size:11px;">${item.nombre} (<b>${item.cOut}</b>)</span>
-                        <button onclick="carrito.splice(${i},1); dibujarCarrito();" style="border:none; color:red; background:none; cursor:pointer;">✕</button>
-                    </div>
-                `).join('');
+            const l = document.getElementById('cart-list');
+            l.innerHTML = carrito.length ? carrito.map((it, i) => `
+                <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                    <span>${it.nombre}</span>
+                    <button onclick="carrito.splice(${i},1); dibujarCarrito()" style="color:red; border:none; background:none; cursor:pointer;">✕</button>
+                </div>
+            `).join('') : "<i>Vacío</i>";
         }
 
         window.procesarSalida = async () => {
-            const r = document.getElementById('recep').value.trim();
-            const py = document.getElementById('proyec').value.trim();
-            if(!r || !py || carrito.length === 0) return alert("Faltan datos");
-
-            if(confirm("¿Confirmar salida?")) {
-                try {
-                    document.getElementById('f-fec').innerText = new Date().toLocaleDateString();
-                    document.getElementById('f-alm').innerText = user.usuario;
-                    document.getElementById('f-rec').innerText = r;
-                    document.getElementById('f-pro').innerText = py;
-                    document.getElementById('f-lista').innerHTML = carrito.map(i => `
-                        <tr><td class="pzas-col">${i.cOut} PZAS</td><td>${i.modelo || '-'}</td><td>${i.noParte || '-'}</td><td>${i.nombre}</td></tr>
-                    `).join('');
-
-                    for (const item of carrito) {
-                        await updateDoc(doc(db, "productos", item.id), { cantidad: increment(-item.cOut) });
-                    }
-
-                    window.print();
-                    carrito = []; 
-                    dibujarCarrito();
-                    document.getElementById('recep').value = ''; 
-                    document.getElementById('proyec').value = '';
-                } catch (e) { 
-                    alert("Error al procesar la salida"); 
-                }
+            const r = document.getElementById('recep').value, py = document.getElementById('proyec').value;
+            if(!r || !py || !carrito.length) return alert("Faltan datos");
+            if(confirm("¿Imprimir vale y descontar?")) {
+                document.getElementById('f-fec').innerText = new Date().toLocaleDateString();
+                document.getElementById('f-alm').innerText = user.usuario;
+                document.getElementById('f-rec').innerText = r;
+                document.getElementById('f-pro').innerText = py;
+                document.getElementById('f-lista').innerHTML = carrito.map(i => `<tr><td style="text-align:center;">1</td><td>${i.modelo}</td><td>${i.noParte}</td><td>${i.nombre}</td></tr>`).join('');
+                for (const it of carrito) { await updateDoc(doc(db, "productos", it.id), { cantidad: increment(-1) }); }
+                window.print();
+                carrito = []; dibujarCarrito();
+                document.getElementById('recep').value = ''; document.getElementById('proyec').value = '';
             }
         };
 
-        // Buscador
         document.getElementById('mainSearch').oninput = (e) => {
             const t = e.target.value.toLowerCase();
-            renderTable(productos.filter(p => 
-                (p.nombre||'').toLowerCase().includes(t) || 
-                (p.noParte||'').toLowerCase().includes(t) || 
-                (p.modelo||'').toLowerCase().includes(t)
-            ));
+            renderTable(productos.filter(p => (p.nombre||'').toLowerCase().includes(t) || (p.noParte||'').toLowerCase().includes(t)));
         };
     </script>
 </body>
