@@ -95,60 +95,44 @@
             background: #f9f9f9;
         }
 
-        /* CONTROLES DE SUBIDA - CORREGIDOS */
+        /* CONTROLES DE SUBIDA - ESTILO DEL PRIMER CÓDIGO */
         .upload-controls { 
-            margin-top: 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            background: #f1f1f1;
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid #ddd;
+            margin-top: 10px; 
+            display: flex; 
+            gap: 8px; 
+            justify-content: center; 
         }
         
-        .upload-controls.hidden { 
-            display: none !important; 
+        .btn-sel { 
+            background: #7f8c8d; 
+            color: white; 
+            border: none; 
+            padding: 8px 12px; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-size: 12px; 
+            font-weight: bold; 
         }
         
-        .btn-subir-drive { 
-            background: #3498db !important; 
-            color: white !important;
-            border: none !important; 
-            padding: 10px 15px !important; 
-            cursor: pointer !important; 
-            font-weight: bold !important;
-            font-size: 14px !important;
-            border-radius: 5px !important;
-            display: block !important;
-            width: 100%;
+        .btn-up { 
+            background: #27ae60; 
+            color: white; 
+            border: none; 
+            padding: 8px 12px; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-size: 12px; 
+            font-weight: bold; 
+            display: none; 
         }
         
-        .btn-subir-drive:hover { 
-            background: #2980b9 !important; 
+        .btn-up:hover { 
+            background: #2ecc71; 
         }
 
-        .btn-subir-drive:disabled { 
-            background: #95a5a6 !important;
-            cursor: not-allowed !important;
-        }
-
-        .btn-seleccionar {
-            background: #7f8c8d !important;
-            color: white !important;
-            border: none !important;
-            padding: 10px 15px !important;
-            cursor: pointer !important;
-            font-weight: bold !important;
-            font-size: 14px !important;
-            border-radius: 5px !important;
-            display: block !important;
-            width: 100%;
-            margin-bottom: 8px;
-        }
-
-        .btn-seleccionar:hover {
-            background: #6c7b7d !important;
+        .btn-up:disabled { 
+            background: #95a5a6; 
+            cursor: not-allowed; 
         }
 
         .preview-info-box { 
@@ -434,17 +418,17 @@
         </section>
     </div>
 
-    <!-- VISOR INFERIOR CON BOTÓN "SUBIR A DRIVE" - CORREGIDO -->
+    <!-- VISOR INFERIOR CON BOTÓN "SUBIR A DRIVE" -->
     <div class="bottom-preview">
         <div class="preview-image-box">
             <span id="status-foto" style="font-size:12px; color:#2980b9; font-weight:bold; margin-bottom:8px;">Selecciona un material para ver detalles</span>
             <img id="main-preview-img" src="imagenes/sin_foto.jpg" alt="Vista previa">
             
-            <!-- CONTROLES DE SUBIDA CORREGIDOS -->
-            <div class="upload-controls hidden" id="upload-box-drive">
-                <input type="file" id="fileDrive" accept="image/*" style="display: none;">
-                <button id="btnSeleccionar" class="btn-seleccionar">📁 SELECCIONAR IMAGEN</button>
-                <button id="btnSubirDrive" class="btn-subir-drive" disabled>🚀 SUBIR A DRIVE</button>
+            <!-- CONTROLES DE SUBIDA DEL PRIMER CÓDIGO -->
+            <div class="upload-controls" id="up-ui" style="display:none;">
+                <button class="btn-sel" onclick="document.getElementById('fileInput').click()">📁 Elegir</button>
+                <button id="btnConfirmUp" class="btn-up">🚀 Subir</button>
+                <input type="file" id="fileInput" accept="image/*" style="display:none;">
             </div>
         </div>
 
@@ -545,131 +529,52 @@
             document.getElementById('th-plus').style.display = 'table-cell';
         }
 
+        // MOSTRAR CONTROLES DE SUBIDA (ESTILO DEL PRIMER CÓDIGO)
         if(puedeSubirImg) {
-            document.getElementById('upload-box-drive').classList.remove('hidden');
+            document.getElementById('up-ui').style.display = 'flex';
         }
 
-        // Configurar el botón de subida - CORREGIDO
-        const btnSeleccionar = document.getElementById('btnSeleccionar');
-        const btnSubirDrive = document.getElementById('btnSubirDrive');
-        const fileInput = document.getElementById('fileDrive');
-        
-        // Cuando se hace clic en "SELECCIONAR IMAGEN", abrir el selector de archivos
-        btnSeleccionar.addEventListener('click', function() {
-            if (!itemSeleccionado) {
-                alert("Por favor, selecciona un producto primero");
-                return;
-            }
-            fileInput.click();
-        });
+        // LÓGICA DE SUBIDA DE IMÁGENES DEL PRIMER CÓDIGO
+        const fileInput = document.getElementById('fileInput');
+        const btnConfirmUp = document.getElementById('btnConfirmUp');
 
-        // Cuando se selecciona un archivo, habilitar el botón de subir
-        fileInput.addEventListener('change', function() {
-            if (this.files && this.files[0]) {
-                const file = this.files[0];
-                
-                // Validar tipo de archivo
-                if(!file.type.startsWith('image/')) {
-                    alert("Por favor, selecciona solo archivos de imagen (JPG, PNG, etc.)");
-                    this.value = "";
-                    btnSubirDrive.disabled = true;
-                    return;
-                }
+        fileInput.onchange = () => {
+            if(fileInput.files[0]) btnConfirmUp.style.display = 'block';
+        };
 
-                // Validar tamaño (máximo 5MB)
-                if(file.size > 5 * 1024 * 1024) {
-                    alert("La imagen es demasiado grande. Máximo 5MB");
-                    this.value = "";
-                    btnSubirDrive.disabled = true;
-                    return;
-                }
-
-                btnSeleccionar.textContent = "📁 CAMBIAR IMAGEN";
-                btnSubirDrive.disabled = false;
-                btnSubirDrive.style.background = "#3498db !important";
-            }
-        });
-
-        // Cuando se hace clic en "SUBIR A DRIVE"
-        btnSubirDrive.addEventListener('click', async function() {
-            if (!itemSeleccionado) {
-                alert("Por favor, selecciona un producto primero");
-                return;
-            }
-
+        btnConfirmUp.onclick = () => {
+            if(!itemSeleccionado) return alert("Selecciona un material");
             const file = fileInput.files[0];
-            if(!file) {
-                alert("Por favor, selecciona una imagen primero");
-                return;
-            }
-
             const reader = new FileReader();
             reader.readAsDataURL(file);
-            
             reader.onload = async () => {
+                document.getElementById('status-foto').innerText = "SUBIENDO...";
+                btnConfirmUp.disabled = true;
                 const base64 = reader.result.split(',')[1];
-                const statusFoto = document.getElementById('status-foto');
-                const nombreProducto = itemSeleccionado.nombre.trim();
-                
-                // Deshabilitar botones durante la subida
-                btnSubirDrive.disabled = true;
-                btnSeleccionar.disabled = true;
-                btnSubirDrive.textContent = "SUBIR A DRIVE (Subiendo...)";
-                btnSubirDrive.style.background = "#f39c12 !important";
-                statusFoto.textContent = "Subiendo imagen a Google Drive...";
-                statusFoto.style.color = "#3498db";
-                
                 try {
-                    // CORRECCIÓN: Usar el mismo formato que en el código original
                     const res = await fetch(scriptURL, {
                         method: "POST",
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ 
+                        body: JSON.stringify({
                             base64: base64,
                             type: file.type,
-                            name: nombreProducto
+                            name: itemSeleccionado.nombre
                         })
                     });
-                    
-                    const data = await res.json();
-                    
-                    if(data.result === "success") {
-                        alert("✓ Foto actualizada correctamente en Google Drive");
-                        document.getElementById('main-preview-img').src = `https://lh3.googleusercontent.com/u/0/d/${data.id}`;
-                        statusFoto.textContent = "✓ Imagen actualizada en Google Drive";
-                        statusFoto.style.color = "#27ae60";
-                        
-                        // Limpiar y resetear
-                        fileInput.value = "";
-                        btnSubirDrive.disabled = true;
-                        btnSeleccionar.disabled = false;
-                        btnSubirDrive.textContent = "🚀 SUBIR A DRIVE";
-                        btnSubirDrive.style.background = "#3498db !important";
-                        btnSeleccionar.textContent = "📁 SELECCIONAR IMAGEN";
-                        
+                    const d = await res.json();
+                    if(d.result === "success") {
+                        alert("¡Imagen guardada!");
+                        btnConfirmUp.style.display = 'none';
+                        // Refrescar la vista
+                        mostrarDetalle(itemSeleccionado);
                     } else {
-                        alert("Error al subir la imagen: " + (data.message || "Error desconocido"));
-                        statusFoto.textContent = "Error al subir la imagen";
-                        statusFoto.style.color = "#e74c3c";
-                        btnSubirDrive.disabled = false;
-                        btnSeleccionar.disabled = false;
-                        btnSubirDrive.textContent = "🚀 SUBIR A DRIVE";
-                        btnSubirDrive.style.background = "#3498db !important";
+                        alert("Error: " + (d.message || "Error desconocido"));
                     }
-                } catch(e) { 
-                    console.error("Error:", e);
-                    alert("Error de conexión al subir la imagen"); 
-                    statusFoto.textContent = "Error de conexión";
-                    statusFoto.style.color = "#e74c3c";
-                    btnSubirDrive.disabled = false;
-                    btnSeleccionar.disabled = false;
-                    btnSubirDrive.textContent = "🚀 SUBIR A DRIVE";
-                    btnSubirDrive.style.background = "#3498db !important";
+                } catch (e) { 
+                    alert("Error al subir: " + e.message); 
                 }
+                btnConfirmUp.disabled = false;
             };
-        });
+        };
 
         // Firestore Realtime
         onSnapshot(collection(db, "productos"), (snap) => {
@@ -686,59 +591,8 @@
                 tr.style.cursor = "pointer";
                 
                 // Evento click para mostrar detalles
-                tr.onclick = async () => {
-                    const nombreFoto = (item.nombre || "sin_nombre").trim();
-                    const imgPreview = document.getElementById('main-preview-img');
-                    const nameDisplay = document.getElementById('prod-name-display');
-                    const detailDisplay = document.getElementById('prod-detail-display');
-                    const statusFoto = document.getElementById('status-foto');
-                    
-                    // Resaltado visual de fila seleccionada
-                    document.querySelectorAll('#inventory-body tr').forEach(r => r.style.background = "");
-                    tr.style.background = "#e3f2fd";
-
-                    itemSeleccionado = item;
-                    nameDisplay.innerText = item.nombre || 'Sin nombre';
-                    
-                    // Mostrar todos los detalles incluyendo los campos adicionales
-                    detailDisplay.innerHTML = `
-                        <div><b>Modelo:</b> ${item.modelo || '-'}</div>
-                        <div><b>No. Parte:</b> ${item.noParte || '-'}</div>
-                        <div><b>Laboratorio:</b> ${item.laboratorio || '-'}</div>
-                        <div><b>Rack:</b> ${item.rack || '-'}</div>
-                        <div><b>Contenedor:</b> ${item.contenedor || '-'}</div>
-                        <div><b>Costo:</b> $${item.costo || 0}</div>
-                        <div><b>Stock disponible:</b> <span style="color: ${item.cantidad < 3 ? 'red' : 'green'}; font-weight: bold;">${item.cantidad || 0} unidades</span></div>
-                        <div><b>Observaciones:</b> ${item.observaciones || 'Sin notas.'}</div>
-                    `;
-
-                    statusFoto.innerText = "Buscando imagen...";
-                    imgPreview.src = "imagenes/sin_foto.jpg";
-
-                    try {
-                        const response = await fetch(`${scriptURL}?itemName=${encodeURIComponent(nombreFoto)}`);
-                        const data = await response.json();
-                        if(data.result === "success" && data.id) {
-                            imgPreview.src = `https://lh3.googleusercontent.com/u/0/d/${data.id}`;
-                            statusFoto.innerText = "✓ Imagen cargada desde Google Drive";
-                            statusFoto.style.color = "#27ae60";
-                        } else {
-                            // Intentar cargar imagen local
-                            imgPreview.src = `imagenes/${nombreFoto}.jpg`;
-                            imgPreview.onerror = () => { 
-                                imgPreview.src = 'imagenes/sin_foto.jpg'; 
-                                statusFoto.innerText = "Sin imagen disponible";
-                                statusFoto.style.color = "#e74c3c";
-                            };
-                        }
-                    } catch (e) {
-                        console.error("Error al buscar imagen:", e);
-                        imgPreview.src = "imagenes/sin_foto.jpg";
-                        statusFoto.innerText = "Sin imagen disponible";
-                        statusFoto.style.color = "#e74c3c";
-                    }
-                };
-
+                tr.onclick = () => mostrarDetalle(item);
+                
                 tr.innerHTML = `
                     <td style="display:${puedeHacerSalidas ? 'table-cell' : 'none'}">
                         <button class="btn-add-item" onclick="event.stopPropagation(); agregar('${item.id}')" style="background: #27ae60; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px;">+</button>
@@ -755,7 +609,49 @@
             });
         }
 
-        // Carrito y Salidas
+        async function mostrarDetalle(item) {
+            itemSeleccionado = item;
+            const imgPreview = document.getElementById('main-preview-img');
+            const nameDisplay = document.getElementById('prod-name-display');
+            const detailDisplay = document.getElementById('prod-detail-display');
+            const statusFoto = document.getElementById('status-foto');
+            
+            nameDisplay.innerText = item.nombre || 'Sin nombre';
+            
+            // Mostrar todos los detalles
+            detailDisplay.innerHTML = `
+                <div><b>Modelo:</b> ${item.modelo || '-'}</div>
+                <div><b>No. Parte:</b> ${item.noParte || '-'}</div>
+                <div><b>Laboratorio:</b> ${item.laboratorio || '-'}</div>
+                <div><b>Rack:</b> ${item.rack || '-'}</div>
+                <div><b>Contenedor:</b> ${item.contenedor || '-'}</div>
+                <div><b>Costo:</b> $${item.costo || 0}</div>
+                <div><b>Stock disponible:</b> <span style="color: ${item.cantidad < 3 ? 'red' : 'green'}; font-weight: bold;">${item.cantidad || 0} unidades</span></div>
+                <div><b>Observaciones:</b> ${item.observaciones || 'Sin notas.'}</div>
+            `;
+
+            statusFoto.innerText = "Buscando imagen...";
+            imgPreview.src = "imagenes/sin_foto.jpg";
+
+            try {
+                const res = await fetch(`${scriptURL}?itemName=${encodeURIComponent(item.nombre)}`);
+                const data = await res.json();
+                if(data.result === "success") {
+                    imgPreview.src = `https://lh3.googleusercontent.com/u/0/d/${data.id}`;
+                    statusFoto.innerText = "✓ Encontrada en Drive";
+                    statusFoto.style.color = "#27ae60";
+                } else {
+                    imgPreview.src = "imagenes/sin_foto.jpg";
+                    statusFoto.innerText = "Sin foto en Drive";
+                    statusFoto.style.color = "#e74c3c";
+                }
+            } catch (e) { 
+                statusFoto.innerText = "Error de red"; 
+                statusFoto.style.color = "#e74c3c";
+            }
+        }
+
+        // Carrito y Salidas (del segundo código)
         window.agregar = (id) => {
             const prod = productos.find(x => x.id === id);
             const enCarro = carrito.find(x => x.id === id);
