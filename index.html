@@ -225,7 +225,7 @@
                 const res = await fetch(`${scriptURL}?itemName=${encodeURIComponent(item.nombre)}`);
                 const data = await res.json();
                 if(data.result === "success") {
-                    img.src = `https://lh3.googleusercontent.com/u/0/d/${data.id}`;
+                    img.src = `https://drive.google.com/thumbnail?id=${data.id}&sz=w1000`;
                     status.innerText = "✓ Encontrada en Drive";
                 } else {
                     img.src = "imagenes/sin_foto.jpg";
@@ -285,7 +285,7 @@
                         
                         // Actualizar la imagen inmediatamente
                         if(d.id) {
-                            document.getElementById('main-preview-img').src = `https://lh3.googleusercontent.com/u/0/d/${d.id}`;
+                            document.getElementById('main-preview-img').src = `https://drive.google.com/thumbnail?id=${d.id}&sz=w1000`;
                         }
                         
                         // Limpiar selección
