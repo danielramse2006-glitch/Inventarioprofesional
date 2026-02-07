@@ -114,6 +114,10 @@
             font-weight: bold; 
         }
         
+        .btn-sel:hover {
+            background: #95a5a6;
+        }
+        
         .btn-up { 
             background: #27ae60; 
             color: white; 
@@ -510,6 +514,7 @@
         let productos = [];
         let carrito = [];
         let itemSeleccionado = null;
+        let archivoSeleccionado = null; // Variable para guardar el archivo seleccionado
         const scriptURL = "https://script.google.com/macros/s/AKfycbxaEtN66UYbSOO57Wm9HPrjv7IyfzV8Q3cyZgvDKkKcC8PTohwGaLhznjI3AfP2VTLS/exec";
 
         window.cerrarSesion = () => { sessionStorage.clear(); window.location.href = 'login.html'; };
@@ -529,51 +534,102 @@
             document.getElementById('th-plus').style.display = 'table-cell';
         }
 
-        // MOSTRAR CONTROLES DE SUBIDA (ESTILO DEL PRIMER CÓDIGO)
+        // MOSTRAR CONTROLES DE SUBIDA
         if(puedeSubirImg) {
             document.getElementById('up-ui').style.display = 'flex';
         }
 
-        // LÓGICA DE SUBIDA DE IMÁGENES DEL PRIMER CÓDIGO
+        // LÓGICA DE SUBIDA DE IMÁGENES CORREGIDA
         const fileInput = document.getElementById('fileInput');
         const btnConfirmUp = document.getElementById('btnConfirmUp');
+        const statusFoto = document.getElementById('status-foto');
 
-        fileInput.onchange = () => {
-            if(fileInput.files[0]) btnConfirmUp.style.display = 'block';
+        // Cuando se selecciona un archivo
+        fileInput.onchange = (e) => {
+            archivoSeleccionado = e.target.files[0];
+            if(archivoSeleccionado) {
+                btnConfirmUp.style.display = 'block';
+                statusFoto.innerText = `📎 Archivo seleccionado: ${archivoSeleccionado.name}`;
+                statusFoto.style.color = "#3498db";
+            } else {
+                btnConfirmUp.style.display = 'none';
+            }
         };
 
-        btnConfirmUp.onclick = () => {
-            if(!itemSeleccionado) return alert("Selecciona un material");
-            const file = fileInput.files[0];
+        // Cuando se hace clic en "Subir"
+        btnConfirmUp.onclick = async () => {
+            if(!itemSeleccionado) {
+                alert("Selecciona primero un material de la tabla");
+                return;
+            }
+            
+            if(!archivoSeleccionado) {
+                alert("No hay archivo seleccionado");
+                return;
+            }
+            
+            statusFoto.innerText = "🔄 SUBIENDO IMAGEN...";
+            statusFoto.style.color = "#e67e22";
+            btnConfirmUp.disabled = true;
+            
             const reader = new FileReader();
-            reader.readAsDataURL(file);
+            
             reader.onload = async () => {
-                document.getElementById('status-foto').innerText = "SUBIENDO...";
-                btnConfirmUp.disabled = true;
                 const base64 = reader.result.split(',')[1];
+                
                 try {
-                    const res = await fetch(scriptURL, {
+                    const response = await fetch(scriptURL, {
                         method: "POST",
+                        headers: {
+                            'Content-Type': 'text/plain',
+                        },
                         body: JSON.stringify({
+                            action: "upload",
                             base64: base64,
-                            type: file.type,
+                            type: archivoSeleccionado.type,
                             name: itemSeleccionado.nombre
                         })
                     });
-                    const d = await res.json();
-                    if(d.result === "success") {
-                        alert("¡Imagen guardada!");
+                    
+                    const data = await response.json();
+                    
+                    if(data.result === "success") {
+                        statusFoto.innerText = "✅ ¡Imagen subida exitosamente!";
+                        statusFoto.style.color = "#27ae60";
+                        alert("Imagen guardada en Google Drive correctamente");
+                        
+                        // Limpiar selección
+                        fileInput.value = '';
+                        archivoSeleccionado = null;
                         btnConfirmUp.style.display = 'none';
-                        // Refrescar la vista
-                        mostrarDetalle(itemSeleccionado);
+                        
+                        // Recargar la imagen para mostrar la nueva
+                        setTimeout(() => {
+                            mostrarDetalle(itemSeleccionado);
+                        }, 1000);
                     } else {
-                        alert("Error: " + (d.message || "Error desconocido"));
+                        statusFoto.innerText = "❌ Error al subir";
+                        statusFoto.style.color = "#e74c3c";
+                        alert("Error: " + (data.message || "Error desconocido"));
                     }
-                } catch (e) { 
-                    alert("Error al subir: " + e.message); 
+                } catch (error) {
+                    console.error("Error en la subida:", error);
+                    statusFoto.innerText = "❌ Error de red";
+                    statusFoto.style.color = "#e74c3c";
+                    alert("Error al subir la imagen: " + error.message);
                 }
+                
                 btnConfirmUp.disabled = false;
             };
+            
+            reader.onerror = () => {
+                statusFoto.innerText = "❌ Error al leer archivo";
+                statusFoto.style.color = "#e74c3c";
+                alert("Error al leer el archivo");
+                btnConfirmUp.disabled = false;
+            };
+            
+            reader.readAsDataURL(archivoSeleccionado);
         };
 
         // Firestore Realtime
@@ -614,7 +670,11 @@
             const imgPreview = document.getElementById('main-preview-img');
             const nameDisplay = document.getElementById('prod-name-display');
             const detailDisplay = document.getElementById('prod-detail-display');
-            const statusFoto = document.getElementById('status-foto');
+            
+            // Limpiar selección de archivo anterior
+            fileInput.value = '';
+            archivoSeleccionado = null;
+            btnConfirmUp.style.display = 'none';
             
             nameDisplay.innerText = item.nombre || 'Sin nombre';
             
@@ -630,28 +690,32 @@
                 <div><b>Observaciones:</b> ${item.observaciones || 'Sin notas.'}</div>
             `;
 
-            statusFoto.innerText = "Buscando imagen...";
+            statusFoto.innerText = "🔍 Buscando imagen en Drive...";
+            statusFoto.style.color = "#3498db";
             imgPreview.src = "imagenes/sin_foto.jpg";
 
             try {
-                const res = await fetch(`${scriptURL}?itemName=${encodeURIComponent(item.nombre)}`);
-                const data = await res.json();
-                if(data.result === "success") {
+                const response = await fetch(`${scriptURL}?action=get&itemName=${encodeURIComponent(item.nombre)}`);
+                const data = await response.json();
+                
+                if(data.result === "success" && data.id) {
                     imgPreview.src = `https://lh3.googleusercontent.com/u/0/d/${data.id}`;
-                    statusFoto.innerText = "✓ Encontrada en Drive";
+                    statusFoto.innerText = "✓ Imagen encontrada en Drive";
                     statusFoto.style.color = "#27ae60";
                 } else {
                     imgPreview.src = "imagenes/sin_foto.jpg";
-                    statusFoto.innerText = "Sin foto en Drive";
-                    statusFoto.style.color = "#e74c3c";
+                    statusFoto.innerText = "📷 Sin foto - Puedes subir una";
+                    statusFoto.style.color = "#e67e22";
                 }
-            } catch (e) { 
-                statusFoto.innerText = "Error de red"; 
+            } catch (error) {
+                console.error("Error al buscar imagen:", error);
+                imgPreview.src = "imagenes/sin_foto.jpg";
+                statusFoto.innerText = "⚠ Error al buscar imagen";
                 statusFoto.style.color = "#e74c3c";
             }
         }
 
-        // Carrito y Salidas (del segundo código)
+        // Carrito y Salidas
         window.agregar = (id) => {
             const prod = productos.find(x => x.id === id);
             const enCarro = carrito.find(x => x.id === id);
@@ -700,7 +764,6 @@
 
             if(confirm("¿Confirmar la salida de material y generar el vale?")) {
                 try {
-                    // Fecha actual formateada
                     const now = new Date();
                     
                     document.getElementById('f-fec').innerText = now.toLocaleDateString('es-ES', {
@@ -712,11 +775,9 @@
                     document.getElementById('f-rec').innerText = r;
                     document.getElementById('f-pro').innerText = py;
                     
-                    // Para firmas
                     document.getElementById('f-alm-sig').innerText = user.usuario;
                     document.getElementById('f-rec-sig').innerText = r;
                     
-                    // Fecha de impresión
                     document.getElementById('print-date').innerText = now.toLocaleDateString('es-ES', {
                         year: 'numeric',
                         month: 'long',
@@ -725,14 +786,12 @@
                         minute: '2-digit'
                     });
                     
-                    // Generar número de vale único
                     const valeNumber = 'VALE-' + now.getFullYear() + '-' + 
                         String(now.getMonth() + 1).padStart(2, '0') + '-' + 
                         String(now.getDate()).padStart(2, '0') + '-' +
                         String(Math.floor(Math.random() * 1000)).padStart(3, '0');
                     document.getElementById('vale-number').innerText = valeNumber;
                     
-                    // Generar tabla de items
                     let totalItems = 0;
                     let totalPieces = 0;
                     
@@ -754,19 +813,16 @@
                     document.getElementById('total-items').innerText = totalItems;
                     document.getElementById('total-pieces').innerText = totalPieces;
 
-                    // Actualizar stock en Firebase
                     for (const item of carrito) {
                         await updateDoc(doc(db, "productos", item.id), { 
                             cantidad: increment(-item.cOut) 
                         });
                     }
 
-                    // Imprimir
                     setTimeout(() => {
                         window.print();
                     }, 500);
                     
-                    // Limpiar carrito
                     carrito = []; 
                     dibujarCarrito();
                     document.getElementById('recep').value = ''; 
