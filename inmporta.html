@@ -1,36 +1,28 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8"><title>Importar JSON - Inventario</title>
+    <meta charset="UTF-8"><title>Importar JSON Especial - Inventario</title>
     <link rel="stylesheet" href="style.css">
     <style>
         .import-container { max-width: 800px; margin: 20px auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .log-box { background: #1e1e1e; color: #00ff00; padding: 15px; height: 350px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 13px; margin-top: 20px; border-radius: 5px; border: 1px solid #333; }
-        .error-msg { color: #ff5555; font-weight: bold; }
+        .log-box { background: #1e1e1e; color: #00ff00; padding: 15px; height: 350px; overflow-y: auto; font-family: monospace; font-size: 13px; margin-top: 20px; border-radius: 5px; }
+        .error-msg { color: #ff5555; }
         .success-msg { color: #55ff55; }
-        .warning-msg { color: #ffff55; }
         progress { width: 100%; height: 25px; margin-top: 10px; }
     </style>
 </head>
 <body class="bg-blue">
     <div class="import-container">
-        <h2 style="color:#2c3e50; text-align:center; margin-top:0;">Importación Masiva (JSON)</h2>
-        <p style="font-size:14px; color:#666; text-align:center;">
-            Carga tu archivo <b>.json</b> generado desde Excel.<br>
-            Asegúrate que los nombres de los campos coincidan con la base de datos.
-        </p>
+        <h2 style="color:#2c3e50; text-align:center;">Importación Masiva (Formato Excel-JSON)</h2>
         
-        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px dashed #ccc; text-align: center;">
-            <input type="file" id="jsonFile" accept=".json">
-        </div>
-
+        <input type="file" id="jsonFile" accept=".json" style="margin: 20px 0;">
         <progress id="importProgress" value="0" max="100"></progress>
-        <p id="progressText" style="text-align:center; font-weight:bold; color:#2c3e50; margin: 10px 0;">Listo para procesar</p>
+        <p id="progressText" style="text-align:center; font-weight:bold;">Selecciona tu archivo JSON</p>
         
-        <button id="btnImport" class="btn-action" style="width:100%; background:#27ae60; color:white; font-size:16px;">▶ INICIAR CARGA A FIREBASE</button>
-        <button onclick="location.href='index.html'" class="btn-action" style="width:100%; margin-top:10px; background:#95a5a6; color:white;">VOLVER AL INICIO</button>
+        <button id="btnImport" class="btn-action" style="width:100%; background:#27ae60; color:white;">SUBIR DATOS A FIREBASE</button>
+        <button onclick="location.href='index.html'" class="btn-action" style="width:100%; margin-top:10px;">VOLVER</button>
 
-        <div class="log-box" id="log">--- ESPERANDO ARCHIVO PARA LOGUEAR ---</div>
+        <div class="log-box" id="log">--- ESPERANDO ARCHIVO ---</div>
     </div>
 
     <script type="module">
@@ -49,8 +41,6 @@
             const div = document.createElement('div');
             if(type === 'error') div.className = 'error-msg';
             if(type === 'success') div.className = 'success-msg';
-            if(type === 'warning') div.className = 'warning-msg';
-            
             div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
             logBox.appendChild(div);
             logBox.scrollTop = logBox.scrollHeight;
@@ -58,87 +48,70 @@
 
         btnImport.onclick = () => {
             const file = fileInput.files[0];
-            if (!file) return alert("Por favor, selecciona el archivo JSON primero.");
+            if (!file) return alert("Selecciona el archivo");
 
             const reader = new FileReader();
-            
             reader.onload = async (e) => {
                 try {
                     const data = JSON.parse(e.target.result);
-                    if (!Array.isArray(data)) throw new Error("El JSON debe ser una lista (array) de objetos.");
-
                     btnImport.disabled = true;
-                    addLog(`Archivo leído. Procesando ${data.length} registros...`, "warning");
-
+                    
                     let importados = 0;
                     let duplicados = 0;
-                    let errores = 0;
 
                     for (let i = 0; i < data.length; i++) {
                         const item = data[i];
-                        // Ajustamos los nombres de los campos según tu Excel/JSON
-                        const np = (item.noParte || item["No. Parte"] || "").toString().trim();
+                        
+                        // MAPEADO DE TUS CAMPOS "__EMPTY"
+                        const noParte = (item["__EMPTY_2"] || "").toString().trim();
+                        const modelo = (item["__EMPTY_1"] || "").toString().trim();
+                        const nombre = (item["__EMPTY_3"] || "Sin Nombre").toString().replace(/_/g, ' '); // Cambia guiones bajos por espacios
+                        const cantidad = Number(item["__EMPTY_8"] || 0);
+                        const lab = item["__EMPTY_13"] || "";
+                        const rack = item["__EMPTY_14"] || "";
+                        const cont = item["__EMPTY_15"] || "";
 
-                        if (!np) {
-                            addLog(`Fila ${i+1}: Sin No. Parte, saltando...`, "error");
-                            errores++;
-                            continue;
-                        }
+                        if (!noParte) continue;
 
                         try {
-                            // Validar duplicado por Número de Parte
-                            const q = query(collection(db, "productos"), where("noParte", "==", np));
+                            // Validar si ya existe para no repetir
+                            const q = query(collection(db, "productos"), where("noParte", "==", noParte));
                             const snap = await getDocs(q);
 
                             if (snap.empty) {
                                 await addDoc(collection(db, "productos"), {
-                                    modelo: item.modelo || item.Modelo || "",
-                                    noParte: np,
-                                    nombre: item.nombre || item.Nombre || "Sin Nombre",
-                                    cantidad: Number(item.cantidad || item.Cantidad || 0),
-                                    costo: Number(item.costo || item.Costo || 0),
-                                    laboratorio: item.laboratorio || item.Laboratorio || "",
-                                    rack: item.rack || item.Rack || "",
-                                    contenedor: item.contenedor || item.Contenedor || "",
-                                    observaciones: item.observaciones || item.Observaciones || "",
-                                    // Tipos por defecto (puedes ajustarlos si vienen en el JSON)
-                                    consumible: item.consumible || false,
-                                    pieza: item.pieza || false,
-                                    herramienta: item.herramienta || false,
-                                    equipo: item.equipo || false,
+                                    modelo: modelo,
+                                    noParte: noParte,
+                                    nombre: nombre,
+                                    cantidad: cantidad,
+                                    costo: 0, // No venía en tu ejemplo
+                                    laboratorio: lab,
+                                    rack: rack,
+                                    contenedor: cont,
                                     fechaCarga: serverTimestamp()
                                 });
                                 importados++;
-                                addLog(`✅ Cargado: ${np}`, "success");
+                                addLog(`✅ OK: ${noParte}`, "success");
                             } else {
                                 duplicados++;
-                                addLog(`⚠️ Ya existe: ${np} (Omitido)`, "warning");
+                                addLog(`⚠️ Salto (Duplicado): ${noParte}`);
                             }
                         } catch (err) {
-                            errores++;
-                            addLog(`❌ Error en ${np}: ${err.message}`, "error");
+                            addLog(`❌ Error en ${noParte}: ${err.message}`, "error");
                         }
 
-                        // Actualizar barra de progreso
+                        // Progreso
                         const p = Math.round(((i + 1) / data.length) * 100);
                         progress.value = p;
-                        progressText.textContent = `Progreso: ${p}% (${i+1}/${data.length})`;
+                        progressText.textContent = `Procesando: ${p}%`;
                     }
 
-                    addLog(`\n--- RESUMEN FINAL ---`);
-                    addLog(`Éxitos: ${importados}`, "success");
-                    addLog(`Duplicados: ${duplicados}`, "warning");
-                    addLog(`Fallos: ${errores}`, "error");
-                    
-                    alert("¡Proceso terminado!");
+                    addLog(`--- FINALIZADO: ${importados} nuevos, ${duplicados} duplicados ---`);
+                    alert("Importación completada");
                     btnImport.disabled = false;
 
-                } catch (err) {
-                    alert("Error al leer el JSON: " + err.message);
-                    console.error(err);
-                }
+                } catch (err) { alert("Error al procesar JSON"); }
             };
-
             reader.readAsText(file);
         };
     </script>
