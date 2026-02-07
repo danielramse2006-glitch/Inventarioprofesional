@@ -5,11 +5,18 @@
     <title>Inventario - Panel Principal</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        body, html { height: 100%; margin: 0; overflow: hidden; background-color: #0080ff; font-family: sans-serif; }
+        body, html { 
+            height: 100%; 
+            margin: 0; 
+            overflow: hidden; 
+            background-color: #0080ff; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            font-size: 14px; /* Tamaño base aumentado */
+        }
         
         .main-container { 
             display: flex; 
-            height: calc(100vh - 250px);
+            height: calc(100vh - 320px); /* Aumentado para visor más alto */
             padding: 15px; 
             gap: 15px; 
             box-sizing: border-box;
@@ -25,12 +32,32 @@
             overflow: hidden; 
             box-shadow: 0 4px 10px rgba(0,0,0,0.2); 
         }
-        .table-wrapper { flex: 1; overflow-y: auto; border: 1px solid #ddd; }
         
-        table, .bottom-preview { color: black !important; }
-        th { color: white !important; background-color: #2c3e50; }
+        .table-wrapper { 
+            flex: 1; 
+            overflow-y: auto; 
+            border: 1px solid #ddd; 
+            font-size: 13px; /* Aumentado */
+        }
+        
+        table, .bottom-preview { 
+            color: black !important; 
+            font-size: 13px; /* Aumentado */
+        }
+        
+        th { 
+            color: white !important; 
+            background-color: #2c3e50; 
+            font-size: 13px; /* Aumentado */
+            padding: 12px 8px !important;
+        }
+        
+        td {
+            padding: 10px 8px !important;
+            font-size: 13px; /* Aumentado */
+        }
 
-        /* --- VISOR INFERIOR FIJO --- */
+        /* --- VISOR INFERIOR FIJO (MÁS ALTO) --- */
         .bottom-preview {
             position: fixed;
             bottom: 0;
@@ -42,14 +69,14 @@
             display: flex;
             align-items: center;
             gap: 40px;
-            height: 250px;
+            height: 320px; /* Aumentado de 250px a 320px */
             box-shadow: 0 -5px 25px rgba(0,0,0,0.3);
             z-index: 1000;
             box-sizing: border-box;
         }
 
         .preview-image-box { 
-            flex: 0 0 220px; 
+            flex: 0 0 280px; /* Ancho aumentado */
             text-align: center; 
             height: 100%; 
             display: flex; 
@@ -58,43 +85,86 @@
             border-right: 1px solid #eee;
             padding-right: 20px;
         }
-        #main-preview-img { max-width: 100%; max-height: 150px; object-fit: contain; border-radius: 5px; }
+        
+        #main-preview-img { 
+            max-width: 100%; 
+            max-height: 220px; /* Aumentado de 150px a 220px */
+            object-fit: contain; 
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            background: #f9f9f9;
+        }
 
         /* Controles de subida actualizados */
         .upload-controls { 
-            margin-top: 10px; 
+            margin-top: 15px; /* Aumentado */
             display: none; 
             flex-direction: column;
-            gap: 5px;
+            gap: 8px; /* Aumentado */
         }
-        .upload-controls.active { display: flex; }
-        .btn-sel { 
-            background: #7f8c8d; 
-            color: white; 
-            border: none; 
-            padding: 6px 12px; 
-            border-radius: 4px; 
-            cursor: pointer; 
-            font-size: 12px; 
-            font-weight: bold; 
+        
+        .upload-controls.active { 
+            display: flex; 
         }
+        
+        .btn-sel, .btn-up { 
+            padding: 8px 15px !important; /* Aumentado */
+            font-size: 13px !important; /* Aumentado */
+            border-radius: 5px !important;
+        }
+        
         .btn-up { 
-            background: #27ae60; 
-            color: white; 
-            border: none; 
-            padding: 6px 12px; 
-            border-radius: 4px; 
-            cursor: pointer; 
-            font-size: 12px; 
-            font-weight: bold; 
-            display: none; 
+            background: #27ae60 !important; 
+            color: white !important; 
+            border: none !important; 
+            padding: 8px 15px !important; 
+            cursor: pointer !important; 
+            font-weight: bold !important; 
+            display: none !important; 
         }
-        .btn-up:hover { background: #2ecc71; }
+        
+        .btn-up:hover { 
+            background: #2ecc71 !important; 
+        }
 
-        .preview-info-box { flex: 1; overflow-y: auto; height: 100%; }
-        .preview-info-box h2 { margin-top: 0; color: #2c3e50; }
+        .preview-info-box { 
+            flex: 1; 
+            overflow-y: auto; 
+            height: 100%; 
+            font-size: 14px; /* Aumentado */
+        }
+        
+        .preview-info-box h2 { 
+            margin-top: 0; 
+            color: #2c3e50; 
+            font-size: 22px; /* Aumentado */
+            margin-bottom: 15px;
+        }
+        
+        #prod-detail-display {
+            font-size: 14px !important; /* Aumentado */
+            line-height: 1.6 !important; /* Mejorado */
+        }
+        
+        #prod-detail-display div {
+            margin-bottom: 10px; /* Mejor espaciado */
+            padding: 5px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        #prod-detail-display div:last-child {
+            border-bottom: none;
+        }
 
-        .cart-box { background: #fff; padding: 10px; border-radius: 6px; border: 1px solid #ccc; margin-top: 15px; color: black; }
+        .cart-box { 
+            background: #fff; 
+            padding: 12px; /* Aumentado */
+            border-radius: 6px; 
+            border: 1px solid #ccc; 
+            margin-top: 15px; 
+            color: black; 
+            font-size: 13px; /* Aumentado */
+        }
         
         /* Estilos específicos para impresión del vale */
         #print-vale { 
@@ -124,44 +194,45 @@
                 padding: 0.5in !important;
                 background: white !important;
                 color: black !important;
-                font-size: 12pt !important;
+                font-size: 14pt !important; /* Aumentado de 12pt a 14pt */
                 line-height: 1.4 !important;
                 box-sizing: border-box !important;
                 page-break-inside: avoid !important;
             }
             
-            /* Encabezado formal */
+            /* Encabezado formal - Letra más grande */
             .vale-header {
                 text-align: center;
-                margin-bottom: 20px;
+                margin-bottom: 25px; /* Aumentado */
                 border-bottom: 3px double #000;
-                padding-bottom: 15px;
+                padding-bottom: 20px; /* Aumentado */
             }
             
             .vale-header h1 {
-                font-size: 24pt !important;
+                font-size: 28pt !important; /* Aumentado de 24pt a 28pt */
                 font-weight: bold;
                 color: #000;
-                margin: 0 0 5px 0;
+                margin: 0 0 10px 0;
                 text-transform: uppercase;
                 letter-spacing: 1px;
             }
             
             .company-info {
-                font-size: 10pt;
+                font-size: 12pt !important; /* Aumentado de 10pt a 12pt */
                 color: #555;
-                margin-bottom: 10px;
+                margin-bottom: 15px; /* Aumentado */
             }
             
             /* Información de la salida */
             .vale-info {
                 display: flex;
                 justify-content: space-between;
-                margin-bottom: 25px;
-                padding: 15px;
+                margin-bottom: 30px; /* Aumentado */
+                padding: 20px; /* Aumentado */
                 background: #f8f9fa;
                 border: 1px solid #dee2e6;
                 border-radius: 4px;
+                font-size: 13pt !important; /* Aumentado */
             }
             
             .info-left, .info-right {
@@ -169,21 +240,21 @@
             }
             
             .info-item {
-                margin-bottom: 8px;
-                font-size: 11pt;
+                margin-bottom: 10px; /* Aumentado */
+                font-size: 13pt !important; /* Aumentado de 11pt a 13pt */
             }
             
             .info-item strong {
-                min-width: 100px;
+                min-width: 120px; /* Aumentado */
                 display: inline-block;
             }
             
-            /* Tabla formal */
+            /* Tabla formal - Letra más grande */
             .vale-table {
                 width: 100%;
                 border-collapse: collapse;
-                margin: 20px 0 40px 0;
-                font-size: 10pt;
+                margin: 25px 0 50px 0; /* Aumentado */
+                font-size: 12pt !important; /* Aumentado de 10pt a 12pt */
             }
             
             .vale-table th {
@@ -191,23 +262,25 @@
                 color: white !important;
                 font-weight: bold;
                 text-transform: uppercase;
-                padding: 12px 8px;
+                padding: 15px 10px !important; /* Aumentado */
                 border: 1px solid #000;
                 text-align: center;
-                font-size: 10pt;
+                font-size: 12pt !important; /* Aumentado de 10pt a 12pt */
             }
             
             .vale-table td {
                 border: 1px solid #000;
-                padding: 10px 8px;
+                padding: 12px 10px !important; /* Aumentado */
                 vertical-align: top;
+                font-size: 11.5pt !important; /* Aumentado */
             }
             
             .cantidad-col {
-                width: 10% !important;
+                width: 12% !important; /* Aumentado */
                 text-align: center;
                 font-weight: bold;
                 background: #f1f1f1;
+                font-size: 12pt !important; /* Aumentado */
             }
             
             .modelo-col {
@@ -220,17 +293,17 @@
             }
             
             .descripcion-col {
-                width: 50% !important;
+                width: 48% !important; /* Ajustado */
             }
             
-            /* Firmas */
+            /* Firmas - Letra más grande */
             .signature-section {
                 position: fixed;
                 bottom: 0.5in;
                 left: 0.5in;
                 right: 0.5in;
-                margin-top: 60px;
-                padding-top: 20px;
+                margin-top: 80px; /* Aumentado */
+                padding-top: 25px; /* Aumentado */
                 border-top: 2px solid #000;
             }
             
@@ -242,34 +315,38 @@
             .signature-box {
                 width: 45%;
                 text-align: center;
+                font-size: 12pt !important; /* Aumentado */
             }
             
             .signature-line {
                 width: 80%;
                 height: 1px;
-                border-top: 1px solid #000;
-                margin: 50px auto 10px auto;
+                border-top: 2px solid #000; /* Más grueso */
+                margin: 60px auto 15px auto; /* Aumentado */
             }
             
             .signature-name {
                 font-weight: bold;
-                margin-top: 5px;
+                margin-top: 8px; /* Aumentado */
+                font-size: 13pt !important; /* Aumentado */
             }
             
             .signature-title {
-                font-size: 9pt;
+                font-size: 11pt !important; /* Aumentado de 9pt a 11pt */
                 color: #555;
             }
             
             /* Totales */
             .totals {
-                margin-top: 20px;
+                margin-top: 30px; /* Aumentado */
                 text-align: right;
+                font-size: 13pt !important; /* Aumentado */
             }
             
             .total-item {
                 font-weight: bold;
-                margin: 5px 0;
+                margin: 8px 0; /* Aumentado */
+                font-size: 13pt !important; /* Aumentado */
             }
             
             /* Evitar saltos de página */
@@ -282,7 +359,7 @@
                 position: fixed;
                 bottom: 0.2in;
                 right: 0.5in;
-                font-size: 9pt;
+                font-size: 11pt !important; /* Aumentado de 9pt a 11pt */
                 color: #666;
             }
             
@@ -291,33 +368,39 @@
     </style>
 </head>
 <body class="bg-blue">
-    <header><h1 style="color: white; margin: 10px 0; text-align: center;">Control de Inventario</h1></header>
+    <header><h1 style="color: white; margin: 10px 0; text-align: center; font-size: 26px;">Control de Inventario</h1></header>
     
     <div class="main-container">
-        <nav class="side-menu" style="width: 200px; display: flex; flex-direction: column; gap: 10px;">
-            <button id="navReg" style="display:none;" onclick="location.href='registro.html'">Registrar</button>
-            <button id="navAct" style="display:none;" onclick="location.href='actualizar.html'">Actualizar</button>
-            <button id="navEli" style="display:none;" onclick="location.href='eliminar.html'">Eliminar</button>
-            <button id="navAdm" style="display:none; background:#f1c40f;" onclick="location.href='usuarios.html'">Usuarios</button>
+        <nav class="side-menu" style="width: 220px; display: flex; flex-direction: column; gap: 12px;">
+            <button id="navReg" style="display:none; font-size: 14px; padding: 10px;" onclick="location.href='registro.html'">Registrar</button>
+            <button id="navAct" style="display:none; font-size: 14px; padding: 10px;" onclick="location.href='actualizar.html'">Actualizar</button>
+            <button id="navEli" style="display:none; font-size: 14px; padding: 10px;" onclick="location.href='eliminar.html'">Eliminar</button>
+            <button id="navAdm" style="display:none; background:#f1c40f; font-size: 14px; padding: 10px;" onclick="location.href='usuarios.html'">Usuarios</button>
             
             <div id="cart-box" class="cart-box">
-                <h4 style="margin:0; text-align:center;">📋 VALE</h4>
-                <div id="cart-list" style="margin: 10px 0; font-size: 0.8em; max-height: 80px; overflow-y:auto;"><i>Vacío</i></div>
-                <input type="text" id="recep" placeholder="¿Quién recibe?" style="width:90%; margin-bottom: 5px;">
-                <input type="text" id="proyec" placeholder="Proyecto" style="width:90%;">
-                <button onclick="procesarSalida()" style="width:100%; background:#e67e22; color:white; border:none; padding:8px; margin-top:5px; cursor:pointer; font-weight:bold;">GENERAR VALE</button>
+                <h4 style="margin:0; text-align:center; font-size: 15px;">📋 VALE DE SALIDA</h4>
+                <div id="cart-list" style="margin: 12px 0; font-size: 13px; max-height: 100px; overflow-y:auto;"><i>Vacío</i></div>
+                <input type="text" id="recep" placeholder="¿Quién recibe?" style="width:95%; margin-bottom: 8px; padding: 8px; font-size: 13px;">
+                <input type="text" id="proyec" placeholder="Proyecto/Orden" style="width:95%; padding: 8px; font-size: 13px;">
+                <button onclick="procesarSalida()" style="width:100%; background:#e67e22; color:white; border:none; padding:10px; margin-top:10px; cursor:pointer; font-weight:bold; font-size: 14px;">GENERAR VALE</button>
             </div>
-            <button class="btn-logout" style="background:#c0392b; color:white; padding: 10px; border: none; border-radius: 4px; cursor: pointer; margin-top: auto;" onclick="cerrarSesion()">Cerrar Sesión</button>
+            <button class="btn-logout" style="background:#c0392b; color:white; padding: 12px; border: none; border-radius: 4px; cursor: pointer; margin-top: auto; font-size: 14px;" onclick="cerrarSesion()">Cerrar Sesión</button>
         </nav>
 
         <section class="content">
-            <input type="text" id="mainSearch" placeholder="🔍 Buscar por modelo, nombre o no. parte..." style="width:100%; padding:12px; border-radius:5px; border:1px solid #ddd; box-sizing: border-box;">
+            <input type="text" id="mainSearch" placeholder="🔍 Buscar por modelo, nombre o no. parte..." style="width:100%; padding:14px; border-radius:5px; border:1px solid #ddd; box-sizing: border-box; font-size: 14px;">
             <div class="table-wrapper">
                 <table>
                     <thead>
                         <tr>
-                            <th id="th-plus" style="display:none;">+</th>
-                            <th>Modelo</th><th>No. Parte</th><th>Nombre</th><th>Stock</th><th>Laboratorio</th><th>Rack</th><th>Contenedor</th>
+                            <th id="th-plus" style="display:none; font-size: 14px;">+</th>
+                            <th style="font-size: 13px;">Modelo</th>
+                            <th style="font-size: 13px;">No. Parte</th>
+                            <th style="font-size: 13px;">Nombre</th>
+                            <th style="font-size: 13px;">Stock</th>
+                            <th style="font-size: 13px;">Laboratorio</th>
+                            <th style="font-size: 13px;">Rack</th>
+                            <th style="font-size: 13px;">Contenedor</th>
                         </tr>
                     </thead>
                     <tbody id="inventory-body"></tbody>
@@ -326,37 +409,38 @@
         </section>
     </div>
 
+    <!-- VISOR INFERIOR MEJORADO -->
     <div class="bottom-preview">
         <div class="preview-image-box">
-            <span id="status-foto" style="font-size:11px; color:#2980b9; font-weight:bold; margin-bottom:5px;">Selecciona un material</span>
+            <span id="status-foto" style="font-size:12px; color:#2980b9; font-weight:bold; margin-bottom:8px;">Selecciona un material para ver detalles</span>
             <img id="main-preview-img" src="imagenes/sin_foto.jpg" alt="Vista previa">
             
             <div class="upload-controls" id="upload-box-drive">
-                <input type="file" id="fileDrive" accept="image/*" style="font-size:10px; width:100%;">
+                <input type="file" id="fileDrive" accept="image/*" style="font-size:12px; width:100%; padding: 5px;">
                 <button id="btnSubirDrive" class="btn-up">🚀 Subir a Drive</button>
             </div>
         </div>
 
         <div class="preview-info-box">
             <h2 id="prod-name-display">Detalles del Material</h2>
-            <hr>
+            <hr style="margin: 10px 0 15px 0;">
             <div id="prod-detail-display" style="font-size: 14px;">
-                Haz clic en una fila para ver la información.
+                Haz clic en cualquier producto de la tabla para ver su información detallada y fotografía.
             </div>
         </div>
     </div>
 
-    <!-- VALE DE SALIDA - NUEVO DISEÑO FORMAL -->
+    <!-- VALE DE SALIDA - NUEVO DISEÑO FORMAL CON LETRA MÁS GRANDE -->
     <div id="print-vale">
         <div class="vale-header">
-            <div style="text-align: center; margin-bottom: 10px;">
-                <h2 style="font-size: 18pt; margin: 0; color: #2c3e50;">UNIVERSIDAD TAMAULIPECA</h2>
-                <h3 style="font-size: 14pt; margin: 5px 0; color: #7f8c8d;">Almacén UT</h3>
+            <div style="text-align: center; margin-bottom: 15px;">
+                <h2 style="font-size: 20pt; margin: 0; color: #2c3e50; font-weight: bold;">UNIVERSIDAD TAMAULIPECA</h2>
+                <h3 style="font-size: 16pt; margin: 8px 0; color: #7f8c8d; font-weight: normal;">Almacén UT</h3>
             </div>
             <h1>VALE DE SALIDA DE MATERIAL</h1>
             <div class="company-info">
                 <strong>SISTEMA DE CONTROL DE INVENTARIO</strong><br>
-                Vale No. <span id="vale-number">001</span> | Fecha de Impresión: <span id="print-date"></span>
+                Vale No. <span id="vale-number" style="font-weight: bold;">001</span> | Fecha de Impresión: <span id="print-date"></span>
             </div>
         </div>
         
@@ -475,11 +559,11 @@
                         <div><b>Rack:</b> ${item.rack || '-'}</div>
                         <div><b>Contenedor:</b> ${item.contenedor || '-'}</div>
                         <div><b>Costo:</b> $${item.costo || 0}</div>
-                        <div><b>Stock:</b> ${item.cantidad || 0}</div>
+                        <div><b>Stock disponible:</b> <span style="color: ${item.cantidad < 3 ? 'red' : 'green'}; font-weight: bold;">${item.cantidad || 0} unidades</span></div>
                         <div><b>Observaciones:</b> ${item.observaciones || 'Sin notas.'}</div>
                     `;
 
-                    statusFoto.innerText = "Buscando en Drive...";
+                    statusFoto.innerText = "Buscando imagen en Google Drive...";
                     imgPreview.src = "imagenes/sin_foto.jpg";
 
                     try {
@@ -487,18 +571,22 @@
                         const data = await response.json();
                         if(data.result === "success" && data.id) {
                             imgPreview.src = `https://lh3.googleusercontent.com/u/0/d/${data.id}`;
-                            statusFoto.innerText = "Cargada desde Google Drive";
+                            statusFoto.innerText = "✓ Imagen cargada desde Google Drive";
+                            statusFoto.style.color = "#27ae60";
                         } else {
                             imgPreview.src = `imagenes/${nombreFoto}.jpg`;
-                            statusFoto.innerText = "Local / Sin foto en Drive";
+                            statusFoto.innerText = "✓ Imagen local (sin foto en Drive)";
+                            statusFoto.style.color = "#f39c12";
                             imgPreview.onerror = () => { 
                                 imgPreview.src = 'imagenes/sin_foto.jpg'; 
-                                statusFoto.innerText = ""; 
+                                statusFoto.innerText = "Sin imagen disponible";
+                                statusFoto.style.color = "#e74c3c";
                             };
                         }
                     } catch (e) {
                         imgPreview.src = `imagenes/${nombreFoto}.jpg`;
-                        statusFoto.innerText = "";
+                        statusFoto.innerText = "Error al buscar en Drive";
+                        statusFoto.style.color = "#e74c3c";
                     }
 
                     if(puedeSubirImg) {
@@ -509,7 +597,7 @@
 
                 tr.innerHTML = `
                     <td style="display:${puedeHacerSalidas ? 'table-cell' : 'none'}">
-                        <button class="btn-add-item" onclick="event.stopPropagation(); agregar('${item.id}')" style="background: #27ae60; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-weight: bold;">+</button>
+                        <button class="btn-add-item" onclick="event.stopPropagation(); agregar('${item.id}')" style="background: #27ae60; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px;">+</button>
                     </td>
                     <td>${item.modelo || '-'}</td>
                     <td style="font-weight:bold; color:#0056b3;">${item.noParte || '-'}</td>
@@ -527,15 +615,20 @@
         async function subirADrive(nombreProducto) {
             const fileInput = document.getElementById('fileDrive');
             const file = fileInput.files[0];
-            if(!file) return alert("Selecciona una imagen");
+            if(!file) return alert("Por favor, selecciona una imagen primero");
 
             const reader = new FileReader();
             reader.readAsDataURL(file);
             reader.onload = async () => {
                 const base64 = reader.result.split(',')[1];
                 const btn = document.getElementById('btnSubirDrive');
+                const statusFoto = document.getElementById('status-foto');
+                
                 btn.innerText = "Subiendo...";
                 btn.disabled = true;
+                statusFoto.innerText = "Subiendo imagen a Google Drive...";
+                statusFoto.style.color = "#3498db";
+                
                 try {
                     const res = await fetch(scriptURL, {
                         method: "POST",
@@ -543,13 +636,25 @@
                     });
                     const data = await res.json();
                     if(data.result === "success") {
-                        alert("Foto actualizada en Drive");
+                        alert("✓ Foto actualizada correctamente en Google Drive");
                         document.getElementById('main-preview-img').src = `https://lh3.googleusercontent.com/u/0/d/${data.id}`;
-                        document.getElementById('status-foto').innerText = "Actualizada en Drive";
+                        statusFoto.innerText = "✓ Imagen actualizada en Google Drive";
+                        statusFoto.style.color = "#27ae60";
+                        
+                        // Limpiar input de archivo
+                        fileInput.value = "";
+                        btn.style.display = 'none';
+                    } else {
+                        alert("Error al subir la imagen");
+                        statusFoto.innerText = "Error al subir la imagen";
+                        statusFoto.style.color = "#e74c3c";
                     }
                 } catch(e) { 
-                    alert("Error al subir"); 
+                    alert("Error de conexión al subir la imagen"); 
+                    statusFoto.innerText = "Error de conexión";
+                    statusFoto.style.color = "#e74c3c";
                 }
+                
                 btn.innerText = "🚀 Subir a Drive";
                 btn.disabled = false;
             };
@@ -559,11 +664,18 @@
         window.agregar = (id) => {
             const prod = productos.find(x => x.id === id);
             const enCarro = carrito.find(x => x.id === id);
+            
             if(enCarro) {
-                if(enCarro.cOut + 1 > prod.cantidad) return alert("Sin stock");
+                if(enCarro.cOut + 1 > prod.cantidad) {
+                    alert(`No hay suficiente stock. Disponible: ${prod.cantidad} unidades`);
+                    return;
+                }
                 enCarro.cOut++;
             } else {
-                if(prod.cantidad < 1) return alert("Sin stock");
+                if(prod.cantidad < 1) {
+                    alert("Producto sin stock disponible");
+                    return;
+                }
                 carrito.push({...prod, cOut: 1});
             }
             dibujarCarrito();
@@ -571,21 +683,31 @@
 
         function dibujarCarrito() {
             const box = document.getElementById('cart-list');
-            box.innerHTML = carrito.length === 0 ? '<i>Vacío</i>' : 
-                carrito.map((item, i) => `
-                    <div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding:3px 0;">
-                        <span style="font-size:11px;">${item.nombre} (<b>${item.cOut}</b>)</span>
-                        <button onclick="carrito.splice(${i},1); dibujarCarrito();" style="border:none; color:red; background:none; cursor:pointer;">✕</button>
+            if (carrito.length === 0) {
+                box.innerHTML = '<i>Vacío - Agrega productos con el botón "+"</i>';
+                return;
+            }
+            
+            box.innerHTML = carrito.map((item, i) => `
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee; padding:6px 0;">
+                    <div style="font-size:12px;">
+                        ${item.nombre} 
+                        <span style="color:#e67e22; font-weight:bold;">(${item.cOut})</span>
                     </div>
-                `).join('');
+                    <button onclick="carrito.splice(${i},1); dibujarCarrito();" style="border:none; color:red; background:none; cursor:pointer; font-size:14px;">✕</button>
+                </div>
+            `).join('');
         }
 
         window.procesarSalida = async () => {
             const r = document.getElementById('recep').value.trim();
             const py = document.getElementById('proyec').value.trim();
-            if(!r || !py || carrito.length === 0) return alert("Faltan datos");
+            
+            if(!r) return alert("Por favor, ingresa el nombre de quien recibe");
+            if(!py) return alert("Por favor, ingresa el proyecto u orden");
+            if(carrito.length === 0) return alert("El carrito está vacío. Agrega productos primero");
 
-            if(confirm("¿Confirmar salida?")) {
+            if(confirm("¿Confirmar la salida de material y generar el vale?")) {
                 try {
                     // Fecha actual formateada
                     const now = new Date();
@@ -661,7 +783,7 @@
                     
                 } catch (e) { 
                     console.error("Error al procesar la salida:", e);
-                    alert("Error al procesar la salida"); 
+                    alert("Error al procesar la salida. Verifica la conexión."); 
                 }
             }
         };
@@ -672,7 +794,8 @@
             renderTable(productos.filter(p => 
                 (p.nombre||'').toLowerCase().includes(t) || 
                 (p.noParte||'').toLowerCase().includes(t) || 
-                (p.modelo||'').toLowerCase().includes(t)
+                (p.modelo||'').toLowerCase().includes(t) ||
+                (p.laboratorio||'').toLowerCase().includes(t)
             ));
         };
     </script>
