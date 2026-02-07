@@ -1,34 +1,64 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8"><title>Importar JSON Especial - Inventario</title>
+    <meta charset="UTF-8">
+    <title>Importar JSON - Sistema Inventario</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        .import-container { max-width: 800px; margin: 20px auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .log-box { background: #1e1e1e; color: #00ff00; padding: 15px; height: 350px; overflow-y: auto; font-family: monospace; font-size: 13px; margin-top: 20px; border-radius: 5px; }
-        .error-msg { color: #ff5555; }
-        .success-msg { color: #55ff55; }
-        progress { width: 100%; height: 25px; margin-top: 10px; }
+        .import-container { 
+            max-width: 850px; 
+            margin: 30px auto; 
+            background: white; 
+            padding: 30px; 
+            border-radius: 12px; 
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15); 
+        }
+        .log-box { 
+            background: #1a1a1a; 
+            color: #2ecc71; 
+            padding: 15px; 
+            height: 350px; 
+            overflow-y: auto; 
+            font-family: 'Consolas', monospace; 
+            font-size: 12px; 
+            margin-top: 20px; 
+            border-radius: 6px;
+            border: 1px solid #333;
+        }
+        .error-msg { color: #ff4757; font-weight: bold; }
+        .success-msg { color: #2ed573; }
+        .warning-msg { color: #eccc68; }
+        progress { width: 100%; height: 25px; margin-top: 15px; border-radius: 5px; }
+        .file-info { background: #f1f2f6; padding: 10px; border-radius: 5px; margin-bottom: 20px; font-size: 13px; color: #57606f; }
     </style>
 </head>
 <body class="bg-blue">
     <div class="import-container">
-        <h2 style="color:#2c3e50; text-align:center;">Importación Masiva (Formato Excel-JSON)</h2>
+        <h2 style="color:#2c3e50; text-align:center; margin-top:0;">📤 Importación Masiva JSON</h2>
         
-        <input type="file" id="jsonFile" accept=".json" style="margin: 20px 0;">
-        <progress id="importProgress" value="0" max="100"></progress>
-        <p id="progressText" style="text-align:center; font-weight:bold;">Selecciona tu archivo JSON</p>
-        
-        <button id="btnImport" class="btn-action" style="width:100%; background:#27ae60; color:white;">SUBIR DATOS A FIREBASE</button>
-        <button onclick="location.href='index.html'" class="btn-action" style="width:100%; margin-top:10px;">VOLVER</button>
+        <div class="file-info">
+            <b>Formato detectado:</b> Excel-JSON (__EMPTY_X)<br>
+            <b>Campos mapeados:</b> Modelo, No. Parte, Nombre, Cantidad, Laboratorio, Rack, Contenedor.
+        </div>
 
-        <div class="log-box" id="log">--- ESPERANDO ARCHIVO ---</div>
+        <div style="text-align: center; border: 2px dashed #bdc3c7; padding: 20px; border-radius: 8px;">
+            <input type="file" id="jsonFile" accept=".json">
+        </div>
+
+        <progress id="importProgress" value="0" max="100"></progress>
+        <p id="progressText" style="text-align:center; font-weight:bold; color:#2c3e50; margin: 10px 0;">Esperando archivo...</p>
+        
+        <button id="btnImport" class="btn-action" style="width:100%; background:#27ae60; color:white; font-size:16px; height: 50px;">▶ INICIAR PROCESO EN FIREBASE</button>
+        <button onclick="location.href='index.html'" class="btn-action" style="width:100%; margin-top:10px; background:#95a5a6; color:white;">VOLVER AL PANEL</button>
+
+        <div class="log-box" id="log">--- LOG DE OPERACIONES ---</div>
     </div>
 
     <script type="module">
         import { db, checkAuth } from './config.js';
         import { collection, addDoc, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         
+        // Verificar que el usuario tenga permiso
         checkAuth('registrar');
 
         const btnImport = document.getElementById('btnImport');
@@ -41,6 +71,8 @@
             const div = document.createElement('div');
             if(type === 'error') div.className = 'error-msg';
             if(type === 'success') div.className = 'success-msg';
+            if(type === 'warning') div.className = 'warning-msg';
+            
             div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
             logBox.appendChild(div);
             logBox.scrollTop = logBox.scrollHeight;
@@ -48,70 +80,99 @@
 
         btnImport.onclick = () => {
             const file = fileInput.files[0];
-            if (!file) return alert("Selecciona el archivo");
+            if (!file) return alert("Por favor, selecciona un archivo .json primero.");
 
             const reader = new FileReader();
+            
             reader.onload = async (e) => {
                 try {
                     const data = JSON.parse(e.target.result);
+                    if (!Array.isArray(data)) throw new Error("El archivo no es una lista válida de objetos.");
+
                     btnImport.disabled = true;
-                    
+                    logBox.innerHTML = ''; // Limpiar log
+                    addLog(`Leyendo ${data.length} registros...`, "warning");
+
                     let importados = 0;
                     let duplicados = 0;
+                    let errores = 0;
+                    let saltados = 0;
 
                     for (let i = 0; i < data.length; i++) {
                         const item = data[i];
                         
-                        // MAPEADO DE TUS CAMPOS "__EMPTY"
-                        const noParte = (item["__EMPTY_2"] || "").toString().trim();
+                        // Mapeo flexible según los campos __EMPTY que proporcionaste
+                        const noParte = (item["__EMPTY_2"] || item["__EMPTY_1"] || "").toString().trim();
                         const modelo = (item["__EMPTY_1"] || "").toString().trim();
-                        const nombre = (item["__EMPTY_3"] || "Sin Nombre").toString().replace(/_/g, ' '); // Cambia guiones bajos por espacios
+                        const nombreRaw = (item["__EMPTY_3"] || "").toString();
+                        // Limpiamos los guiones bajos por espacios para que se vea bien
+                        const nombre = nombreRaw.replace(/_/g, ' ').trim();
+                        
                         const cantidad = Number(item["__EMPTY_8"] || 0);
                         const lab = item["__EMPTY_13"] || "";
                         const rack = item["__EMPTY_14"] || "";
                         const cont = item["__EMPTY_15"] || "";
 
-                        if (!noParte) continue;
+                        // Si la fila está vacía o no tiene identificador, saltar
+                        if (!noParte && !nombre) {
+                            saltados++;
+                            continue;
+                        }
+
+                        // Usamos el No. Parte como identificador único
+                        const idBusqueda = noParte || nombre;
 
                         try {
-                            // Validar si ya existe para no repetir
-                            const q = query(collection(db, "productos"), where("noParte", "==", noParte));
+                            // Revisar si ya existe en Firebase
+                            const q = query(collection(db, "productos"), where("noParte", "==", idBusqueda));
                             const snap = await getDocs(q);
 
                             if (snap.empty) {
                                 await addDoc(collection(db, "productos"), {
                                     modelo: modelo,
-                                    noParte: noParte,
-                                    nombre: nombre,
+                                    noParte: idBusqueda,
+                                    nombre: nombre || "Sin Nombre",
                                     cantidad: cantidad,
-                                    costo: 0, // No venía en tu ejemplo
+                                    costo: 0,
                                     laboratorio: lab,
                                     rack: rack,
                                     contenedor: cont,
                                     fechaCarga: serverTimestamp()
                                 });
                                 importados++;
-                                addLog(`✅ OK: ${noParte}`, "success");
+                                addLog(`✅ Cargado: ${idBusqueda}`, "success");
                             } else {
                                 duplicados++;
-                                addLog(`⚠️ Salto (Duplicado): ${noParte}`);
+                                addLog(`⚠️ Duplicado omitido: ${idBusqueda}`, "warning");
                             }
                         } catch (err) {
-                            addLog(`❌ Error en ${noParte}: ${err.message}`, "error");
+                            errores++;
+                            addLog(`❌ Error en fila ${i+1}: ${err.message}`, "error");
                         }
 
-                        // Progreso
+                        // Actualizar barra de progreso
                         const p = Math.round(((i + 1) / data.length) * 100);
                         progress.value = p;
-                        progressText.textContent = `Procesando: ${p}%`;
+                        progressText.textContent = `Procesando: ${p}% (${i+1}/${data.length})`;
                     }
 
-                    addLog(`--- FINALIZADO: ${importados} nuevos, ${duplicados} duplicados ---`);
-                    alert("Importación completada");
+                    addLog(`\n--- RESUMEN FINAL ---`, "warning");
+                    addLog(`Nuevos: ${importados}`, "success");
+                    addLog(`Duplicados: ${duplicados}`, "warning");
+                    addLog(`Vacíos: ${saltados}`);
+                    if(errores > 0) addLog(`Errores: ${errores}`, "error");
+                    
+                    alert("Importación terminada con éxito.");
                     btnImport.disabled = false;
+                    btnImport.textContent = "▶ REPETIR IMPORTACIÓN";
 
-                } catch (err) { alert("Error al procesar JSON"); }
+                } catch (err) {
+                    alert("Error crítico: " + err.message);
+                    addLog("❌ Error: El archivo no tiene formato JSON válido.", "error");
+                    btnImport.disabled = false;
+                }
             };
+
             reader.readAsText(file);
         };
     </script>
