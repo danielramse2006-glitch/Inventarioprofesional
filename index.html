@@ -30,7 +30,7 @@
             <button id="navAct" style="display:none;" onclick="location.href='actualizar.html'">Actualizar</button>
             <button id="navEli" style="display:none;" onclick="location.href='eliminar.html'">Eliminar</button>
             <button id="navAdm" style="display:none; background:#f1c40f;" onclick="location.href='usuarios.html'">Usuarios</button>
-            <div id="cart-box" class="cart-box">
+            <div id="cart-box" class="cart-box" style="display:none;">
                 <h4 style="margin:0; text-align:center;">📋 VALE</h4>
                 <div id="cart-list" style="margin: 10px 0; font-size: 0.8em; max-height: 80px; overflow-y:auto;"><i>Vacío</i></div>
                 <input type="text" id="recep" placeholder="¿Quién recibe?" style="width:90%; margin-bottom: 5px;">
@@ -51,7 +51,6 @@
             </div>
         </section>
     </div>
-
     <div class="bottom-preview">
         <div class="preview-image-box">
             <span id="status-foto" style="font-size:11px; color:#2980b9; font-weight:bold; margin-bottom:5px;">Selecciona un material</span>
@@ -65,6 +64,19 @@
         <div class="preview-info-box">
             <h2 id="p-nombre">Detalles del Material</h2><hr>
             <div id="p-detalles" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 14px;">Haz clic en una fila para ver la información.</div>
+        </div>
+    </div>
+    <div id="print-vale" style="display:none; padding: 30px;">
+        <h2 style="text-align:center;">VALE DE SALIDA DE MATERIAL</h2>
+        <p><strong>Fecha:</strong> <span id="f-fec"></span> | <strong>Entrega:</strong> <span id="f-alm"></span></p>
+        <p><strong>Recibe:</strong> <span id="f-rec"></span> | <strong>Proyecto:</strong> <span id="f-pro"></span></p>
+        <table border="1" style="width:100%; border-collapse:collapse; margin-top: 20px;">
+            <thead><tr><th>CANT.</th><th>MODELO</th><th>NO. PARTE</th><th>DESCRIPCIÓN</th></tr></thead>
+            <tbody id="f-lista"></tbody>
+        </table>
+        <div style="margin-top:80px; display:flex; justify-content:space-around;">
+            <div style="text-align:center; border-top:1px solid #000; width:200px; padding-top: 5px;">Firma Entrega</div>
+            <div style="text-align:center; border-top:1px solid #000; width:200px; padding-top: 5px;">Firma Recibe</div>
         </div>
     </div>
 
@@ -86,8 +98,7 @@
         if(esAdmin || p.salidas) { document.getElementById('cart-box').style.display = 'block'; document.getElementById('th-plus').style.display = 'table-cell'; }
 
         onSnapshot(collection(db, "productos"), (snap) => {
-            productos = [];
-            snap.forEach(d => productos.push({...d.data(), id: d.id}));
+            productos = []; snap.forEach(d => productos.push({...d.data(), id: d.id}));
             renderTable(productos);
         });
 
@@ -97,10 +108,8 @@
                 const tr = document.createElement('tr'); tr.style.cursor = "pointer";
                 tr.onclick = () => mostrarDetalle(item);
                 tr.innerHTML = `
-                    <td style="display:${(esAdmin || p.salidas) ? 'table-cell' : 'none'}">
-                        <button class="btn-add-item" onclick="event.stopPropagation(); agregar('${item.id}')">+</button>
-                    </td>
-                    <td>${item.modelo || '-'}</td><td>${item.noParte || '-'}</td><td>${item.nombre || '-'}</td>
+                    <td style="display:${(esAdmin || p.salidas) ? 'table-cell' : 'none'}"><button onclick="event.stopPropagation(); agregar('${item.id}')">+</button></td>
+                    <td>${item.modelo || '-'}</td><td style="font-weight:bold;">${item.noParte || '-'}</td><td>${item.nombre || '-'}</td>
                     <td style="text-align:center; font-weight:bold; color:${item.cantidad < 3 ? 'red' : 'black'};">${item.cantidad || 0}</td>
                     <td>${item.laboratorio || '-'}</td><td>${item.rack || '-'}</td><td>${item.contenedor || '-'}</td>`;
                 tbody.appendChild(tr);
@@ -112,9 +121,9 @@
             document.getElementById('p-nombre').innerText = item.nombre;
             document.getElementById('p-detalles').innerHTML = `
                 <div><b>Modelo:</b> ${item.modelo || 'N/A'}</div><div><b>No. Parte:</b> ${item.noParte || 'N/A'}</div>
-                <div><b>Lab:</b> ${item.laboratorio || 'N/A'}</div><div><b>Rack:</b> ${item.rack || 'N/A'}</div>
+                <div><b>Laboratorio:</b> ${item.laboratorio || 'N/A'}</div><div><b>Rack:</b> ${item.rack || 'N/A'}</div>
                 <div><b>Contenedor:</b> ${item.contenedor || 'N/A'}</div><div><b>Costo:</b> $${item.costo || 0}</div>
-                <div style="grid-column: span 2;"><b>Notas:</b> ${item.observaciones || 'Sin notas.'}</div>`;
+                <div style="grid-column: span 2;"><b>Observaciones:</b> ${item.observaciones || 'Sin notas.'}</div>`;
 
             const img = document.getElementById('main-preview-img');
             const status = document.getElementById('status-foto');
@@ -124,13 +133,10 @@
                 const res = await fetch(`${scriptURL}?itemName=${encodeURIComponent(item.nombre)}`);
                 const data = await res.json();
                 if(data.result === "success" && data.id) {
-                    // CAMBIO CLAVE: URL de previsualización correcta de Drive
-                    img.src = `https://lh3.googleusercontent.com/u/0/d/${data.id}`;
+                    // CORRECCIÓN AQUÍ: Usamos template literals correctamente
+                    img.src = `https://drive.google.com/thumbnail?id=${data.id}&sz=w1000`;
                     status.innerText = "✓ Encontrada en Drive";
-                } else {
-                    img.src = "imagenes/sin_foto.jpg";
-                    status.innerText = "Sin foto";
-                }
+                } else { img.src = "imagenes/sin_foto.jpg"; status.innerText = "Sin foto"; }
             } catch (e) { status.innerText = "Error de red"; }
         }
 
@@ -148,20 +154,9 @@
                 btnConfirmUp.disabled = true;
                 const base64 = reader.result.split(',')[1];
                 try {
-                    const res = await fetch(scriptURL, {
-                        method: "POST",
-                        body: JSON.stringify({
-                            base64: base64,
-                            type: file.type,
-                            name: itemSeleccionado.nombre
-                        })
-                    });
+                    const res = await fetch(scriptURL, { method: "POST", body: JSON.stringify({ base64: base64, type: file.type, name: itemSeleccionado.nombre }) });
                     const d = await res.json();
-                    if(d.result === "success") {
-                        alert("¡Imagen guardada!");
-                        btnConfirmUp.style.display = 'none';
-                        mostrarDetalle(itemSeleccionado);
-                    }
+                    if(d.result === "success") { alert("¡Imagen guardada!"); btnConfirmUp.style.display = 'none'; mostrarDetalle(itemSeleccionado); }
                 } catch (e) { alert("Error al subir"); }
                 btnConfirmUp.disabled = false;
             };
@@ -184,13 +179,17 @@
         }
 
         window.procesarSalida = async () => {
-            const r = document.getElementById('recep').value;
-            const py = document.getElementById('proyec').value;
+            const r = document.getElementById('recep').value; const py = document.getElementById('proyec').value;
             if(!r || !py || carrito.length === 0) return alert("Faltan datos");
             if(confirm("¿Generar vale y descontar stock?")) {
+                document.getElementById('f-fec').innerText = new Date().toLocaleDateString();
+                document.getElementById('f-alm').innerText = user.usuario;
+                document.getElementById('f-rec').innerText = r;
+                document.getElementById('f-pro').innerText = py;
                 document.getElementById('f-lista').innerHTML = carrito.map(i => `<tr><td>1 PZ</td><td>${i.modelo}</td><td>${i.noParte}</td><td>${i.nombre}</td></tr>`).join('');
                 for (const item of carrito) { await updateDoc(doc(db, "productos", item.id), { cantidad: increment(-1) }); }
                 window.print(); carrito = []; dibujarCarrito();
+                document.getElementById('recep').value = ''; document.getElementById('proyec').value = '';
             }
         };
 
