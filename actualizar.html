@@ -6,7 +6,7 @@
     <style>body { background-color: #cccccc; }</style>
 </head>
 <body>
-    <h2 style="text-align:center; background:#999; color:white; padding:15px; margin:0;">Actualizar objeto</h2>
+    <h2 style="text-align:center; background:#999; color:white; padding:15px; margin:0;">Actualizar Material</h2>
     <form id="f-upd" class="grid-form" style="background:transparent;">
         <div class="col">
             <label class="check-label"><input type="checkbox"> Modelo</label><input type="text" id="m">
@@ -17,22 +17,21 @@
         <div class="col">
             <label class="check-label"><input type="checkbox"> Cantidad</label><input type="number" id="c">
             <label class="check-label"><input type="checkbox"> Costo</label><input type="number" id="co">
-            <label class="check-label"><input type="checkbox"> Consumible</label><select id="con"><option>Consumible</option></select>
+            <label class="check-label"><input type="checkbox"> Consumible</label><select id="con"><option>Consumible</option><option>No Consumible</option></select>
         </div>
         <div class="col">
-            <label class="check-label"><input type="checkbox"> Área</label><input type="text" id="u">
-            <label class="check-label"><input type="checkbox"> Estante</label><input type="text" id="e">
+            <label class="check-label"><input type="checkbox"> Laboratorio</label><input type="text" id="u">
+            <label class="check-label"><input type="checkbox"> Rack</label><input type="text" id="e">
             <label class="check-label"><input type="checkbox"> Contenedor</label><input type="text" id="ct">
         </div>
         <div class="col">
             <label class="check-label"><input type="checkbox"> Lote</label><input type="text" id="l">
-            <label class="check-label"><input type="checkbox"> Presentación</label><input type="text" id="p">
+            <label class="check-label"><input type="checkbox"> Estado</label><input type="text" id="est">
             <label class="check-label"><input type="checkbox"> Observaciones</label><textarea id="obs"></textarea>
-            <button type="button" class="btn-action" style="margin-top:10px;">Adjuntar Foto</button>
         </div>
         <div class="form-buttons">
             <select id="crit" style="width:150px;"><option value="noParte">No. Parte</option><option value="nombre">Nombre</option></select>
-            <input type="text" id="val" placeholder="Dato a buscar...">
+            <input type="text" id="val" placeholder="Buscar...">
             <button type="button" id="btnBus" class="btn-action">Buscar</button>
             <button type="submit" class="btn-action">Actualizar</button>
             <button type="button" class="btn-action" onclick="location.href='index.html'">Volver</button>
@@ -53,12 +52,18 @@
             const snap = await getDocs(q);
             if(!snap.empty) {
                 const d = snap.docs[0].data(); currentId = snap.docs[0].id;
-                document.getElementById('m').value = d.modelo; document.getElementById('np').value = d.noParte;
-                document.getElementById('n').value = d.nombre; document.getElementById('d').value = d.descripcion;
-                document.getElementById('c').value = d.cantidad; document.getElementById('co').value = d.costo;
-                document.getElementById('u').value = d.ubicacion; document.getElementById('e').value = d.estante;
-                document.getElementById('ct').value = d.contenedor; document.getElementById('l').value = d.lote;
-                document.getElementById('p').value = d.presentacion; document.getElementById('obs').value = d.observaciones;
+                document.getElementById('m').value = d.modelo || ''; 
+                document.getElementById('np').value = d.noParte || '';
+                document.getElementById('n').value = d.nombre || ''; 
+                document.getElementById('d').value = d.descripcion || '';
+                document.getElementById('c').value = d.cantidad || 0; 
+                document.getElementById('co').value = d.costo || 0;
+                document.getElementById('u').value = d.ubicacion || ''; 
+                document.getElementById('e').value = d.estante || '';
+                document.getElementById('ct').value = d.contenedor || ''; 
+                document.getElementById('l').value = d.lote || '';
+                document.getElementById('est').value = d.estado || ''; // Campo nuevo
+                document.getElementById('obs').value = d.observaciones || '';
                 alert("Datos cargados");
             } else { alert("No encontrado"); }
         };
@@ -66,6 +71,9 @@
         document.getElementById('f-upd').onsubmit = async (e) => {
             e.preventDefault();
             if(!currentId) return alert("Primero busca un producto");
+            
+            // Solo actualizamos campos si los inputs tienen valor (opcional, o sobreescribir todo)
+            // Aquí sobreescribimos con lo que haya en pantalla
             await updateDoc(doc(db, "productos", currentId), {
                 modelo: document.getElementById('m').value,
                 noParte: document.getElementById('np').value,
@@ -77,7 +85,7 @@
                 estante: document.getElementById('e').value,
                 contenedor: document.getElementById('ct').value,
                 lote: document.getElementById('l').value,
-                presentacion: document.getElementById('p').value,
+                estado: document.getElementById('est').value,
                 observaciones: document.getElementById('obs').value
             });
             alert("Actualizado correctamente");

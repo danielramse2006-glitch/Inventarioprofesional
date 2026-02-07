@@ -90,7 +90,7 @@
                     <thead>
                         <tr>
                             <th id="th-plus" style="display:none;">+</th>
-                            <th>Modelo</th><th>No. Parte</th><th>Nombre</th><th>Stock</th><th>Ubicación</th>
+                            <th>Modelo</th><th>No. Parte</th><th>Nombre</th><th>Stock</th><th>Laboratorio</th>
                         </tr>
                     </thead>
                     <tbody id="inventory-body"></tbody>
@@ -188,7 +188,7 @@
             lista.forEach(item => {
                 const tr = document.createElement('tr');
 
-                // CAMBIO A EVENTO CLICK
+                // EVENTO CLICK ACTUALIZADO PARA MOSTRAR CAMPOS NUEVOS
                 tr.onclick = async () => {
                     const nombreFoto = (item.nombre || "sin_nombre").trim();
                     const imgPreview = document.getElementById('main-preview-img');
@@ -201,11 +201,15 @@
                     tr.style.background = "#e3f2fd";
 
                     nameDisplay.innerText = nombreFoto;
+                    
+                    // --- AQUÍ SE REFLEJAN LOS CAMBIOS DE LA BD EN LA VISTA ---
                     detailDisplay.innerHTML = `
                         <b>Modelo:</b> ${item.modelo || '-'} <br>
                         <b>No. Parte:</b> ${item.noParte || '-'} <br>
-                        <b>Ubicación:</b> ${item.ubicacion || '-'}
+                        <b>Laboratorio:</b> ${item.ubicacion || '-'} <br>
+                        <b>Rack:</b> ${item.estante || '-'} | <b>Estado:</b> ${item.estado || '-'}
                     `;
+                    // ---------------------------------------------------------
 
                     statusFoto.innerText = "Buscando en Drive...";
                     imgPreview.src = "imagenes/sin_foto.jpg";
