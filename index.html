@@ -1,95 +1,35 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>Inventario - Panel Principal</title>
+    <meta charset="UTF-8"><title>Inventario - Panel Principal</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Bloqueo de scroll general para scroll interno en tabla */
         body, html { height: 100%; margin: 0; overflow: hidden; background-color: #0080ff; font-family: sans-serif; }
-        
-        .main-container { 
-            display: flex; 
-            height: calc(100vh - 250px); /* Restamos el espacio del visor inferior */
-            padding: 15px; 
-            gap: 15px; 
-            box-sizing: border-box;
-        }
-
-        /* Tabla con scroll independiente */
-        .content { 
-            flex: 1; 
-            display: flex; 
-            flex-direction: column; 
-            background: white; 
-            border-radius: 10px; 
-            padding: 15px; 
-            overflow: hidden; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2); 
-        }
+        .main-container { display: flex; height: calc(100vh - 250px); padding: 15px; gap: 15px; box-sizing: border-box; }
+        .content { flex: 1; display: flex; flex-direction: column; background: white; border-radius: 10px; padding: 15px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
         .table-wrapper { flex: 1; overflow-y: auto; border: 1px solid #ddd; }
-        
-        /* Forzar texto negro en tabla y visor */
         table, .bottom-preview { color: black !important; }
         th { color: white !important; background-color: #2c3e50; }
-
-        /* --- VISOR INFERIOR FIJO --- */
-        .bottom-preview {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: white;
-            border-top: 5px solid #3498db;
-            padding: 15px 30px;
-            display: flex;
-            align-items: center;
-            gap: 40px;
-            height: 250px;
-            box-shadow: 0 -5px 25px rgba(0,0,0,0.3);
-            z-index: 1000;
-            box-sizing: border-box;
-        }
-
-        .preview-image-box { 
-            flex: 0 0 220px; 
-            text-align: center; 
-            height: 100%; 
-            display: flex; 
-            flex-direction: column; 
-            justify-content: center; 
-            border-right: 1px solid #eee;
-            padding-right: 20px;
-        }
+        .bottom-preview { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 5px solid #3498db; padding: 15px 30px; display: flex; align-items: center; gap: 40px; height: 250px; box-shadow: 0 -5px 25px rgba(0,0,0,0.3); z-index: 1000; box-sizing: border-box; }
+        .preview-image-box { flex: 0 0 220px; text-align: center; height: 100%; display: flex; flex-direction: column; justify-content: center; border-right: 1px solid #eee; padding-right: 20px; }
         #main-preview-img { max-width: 100%; max-height: 150px; object-fit: contain; border-radius: 5px; }
-
-        /* Botones de subida */
         .upload-controls { margin-top: 10px; display: flex; gap: 8px; justify-content: center; }
         .btn-sel { background: #7f8c8d; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; }
         .btn-up { background: #27ae60; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; display: none; }
-        .btn-up:hover { background: #2ecc71; }
-
         .preview-info-box { flex: 1; overflow-y: auto; height: 100%; }
         .preview-info-box h2 { margin-top: 0; color: #2c3e50; }
-
         .cart-box { background: #fff; padding: 10px; border-radius: 6px; border: 1px solid #ccc; margin-top: 15px; color: black; }
-        
-        @media print {
-            .bottom-preview, .side-menu, #mainSearch, header { display: none !important; }
-            #print-vale { display: block !important; position: absolute; top: 0; left: 0; width: 100%; color: black; }
-        }
+        @media print { .bottom-preview, .side-menu, #mainSearch, header { display: none !important; } #print-vale { display: block !important; position: absolute; top: 0; left: 0; width: 100%; color: black; } }
     </style>
 </head>
 <body class="bg-blue">
     <header><h1 style="color: white; margin: 10px 0; text-align: center;">Control de Inventario</h1></header>
-    
     <div class="main-container">
         <nav class="side-menu" style="width: 200px; display: flex; flex-direction: column; gap: 10px;">
             <button id="navReg" style="display:none;" onclick="location.href='registro.html'">Registrar</button>
             <button id="navAct" style="display:none;" onclick="location.href='actualizar.html'">Actualizar</button>
             <button id="navEli" style="display:none;" onclick="location.href='eliminar.html'">Eliminar</button>
             <button id="navAdm" style="display:none; background:#f1c40f;" onclick="location.href='usuarios.html'">Usuarios</button>
-            
             <div id="cart-box" class="cart-box">
                 <h4 style="margin:0; text-align:center;">📋 VALE</h4>
                 <div id="cart-list" style="margin: 10px 0; font-size: 0.8em; max-height: 80px; overflow-y:auto;"><i>Vacío</i></div>
@@ -99,16 +39,12 @@
             </div>
             <button class="btn-logout" style="background:#c0392b; color:white; padding: 10px; border: none; border-radius: 4px; cursor: pointer; margin-top: auto;" onclick="sessionStorage.clear(); location.href='login.html'">Cerrar Sesión</button>
         </nav>
-
         <section class="content">
             <input type="text" id="mainSearch" placeholder="🔍 Buscar por modelo, nombre o no. parte..." style="width:100%; padding:12px; border-radius:5px; border:1px solid #ddd; box-sizing: border-box;">
             <div class="table-wrapper">
                 <table>
                     <thead>
-                        <tr>
-                            <th id="th-plus" style="display:none;">+</th>
-                            <th>Modelo</th><th>No. Parte</th><th>Nombre</th><th>Stock</th><th>Laboratorio</th><th>Rack</th><th>Contenedor</th>
-                        </tr>
+                        <tr><th id="th-plus" style="display:none;">+</th><th>Modelo</th><th>No. Parte</th><th>Nombre</th><th>Stock</th><th>Laboratorio</th><th>Rack</th><th>Contenedor</th></tr>
                     </thead>
                     <tbody id="inventory-body"></tbody>
                 </table>
@@ -120,34 +56,15 @@
         <div class="preview-image-box">
             <span id="status-foto" style="font-size:11px; color:#2980b9; font-weight:bold; margin-bottom:5px;">Selecciona un material</span>
             <img id="main-preview-img" src="imagenes/sin_foto.jpg">
-            
             <div class="upload-controls" id="up-ui" style="display:none;">
                 <button class="btn-sel" onclick="document.getElementById('fileInput').click()">📁 Elegir</button>
                 <button id="btnConfirmUp" class="btn-up">🚀 Subir</button>
                 <input type="file" id="fileInput" accept="image/*" style="display:none;">
             </div>
         </div>
-
         <div class="preview-info-box">
-            <h2 id="p-nombre">Detalles del Material</h2>
-            <hr>
-            <div id="p-detalles" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 14px;">
-                Haz clic en una fila para ver la información.
-            </div>
-        </div>
-    </div>
-
-    <div id="print-vale" style="display:none; padding: 30px;">
-        <h2 style="text-align:center;">VALE DE SALIDA DE MATERIAL</h2>
-        <p><strong>Fecha:</strong> <span id="f-fec"></span> | <strong>Entrega:</strong> <span id="f-alm"></span></p>
-        <p><strong>Recibe:</strong> <span id="f-rec"></span> | <strong>Proyecto:</strong> <span id="f-pro"></span></p>
-        <table border="1" style="width:100%; border-collapse:collapse; margin-top: 20px;">
-            <thead><tr><th>CANT.</th><th>MODELO</th><th>NO. PARTE</th><th>DESCRIPCIÓN</th></tr></thead>
-            <tbody id="f-lista"></tbody>
-        </table>
-        <div style="margin-top:80px; display:flex; justify-content:space-around;">
-            <div style="text-align:center; border-top:1px solid #000; width:200px; padding-top: 5px;">Firma Entrega</div>
-            <div style="text-align:center; border-top:1px solid #000; width:200px; padding-top: 5px;">Firma Recibe</div>
+            <h2 id="p-nombre">Detalles del Material</h2><hr>
+            <div id="p-detalles" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 14px;">Haz clic en una fila para ver la información.</div>
         </div>
     </div>
 
@@ -157,25 +74,17 @@
         
         const user = checkAuth();
         const p = user.permisos || {};
-        let productos = [];
-        let carrito = [];
-        let itemSeleccionado = null;
+        let productos = []; let carrito = []; let itemSeleccionado = null;
         const scriptURL = "https://script.google.com/macros/s/AKfycbxaEtN66UYbSOO57Wm9HPrjv7IyfzV8Q3cyZgvDKkKcC8PTohwGaLhznjI3AfP2VTLS/exec";
 
-        // Permisos y UI
         const esAdmin = user.usuario === 'admin';
         if(esAdmin || p.registrar) document.getElementById('navReg').style.display = 'block';
         if(esAdmin || p.actualizar) document.getElementById('navAct').style.display = 'block';
         if(esAdmin || p.eliminar) document.getElementById('navEli').style.display = 'block';
         if(esAdmin) document.getElementById('navAdm').style.display = 'block';
         if(esAdmin || p.subirImagenes) document.getElementById('up-ui').style.display = 'flex';
-        
-        if(esAdmin || p.salidas) {
-            document.getElementById('cart-box').style.display = 'block';
-            document.getElementById('th-plus').style.display = 'table-cell';
-        }
+        if(esAdmin || p.salidas) { document.getElementById('cart-box').style.display = 'block'; document.getElementById('th-plus').style.display = 'table-cell'; }
 
-        // Firestore Realtime
         onSnapshot(collection(db, "productos"), (snap) => {
             productos = [];
             snap.forEach(d => productos.push({...d.data(), id: d.id}));
@@ -183,24 +92,17 @@
         });
 
         function renderTable(lista) {
-            const tbody = document.getElementById('inventory-body');
-            tbody.innerHTML = '';
+            const tbody = document.getElementById('inventory-body'); tbody.innerHTML = '';
             lista.forEach(item => {
-                const tr = document.createElement('tr');
-                tr.style.cursor = "pointer";
+                const tr = document.createElement('tr'); tr.style.cursor = "pointer";
                 tr.onclick = () => mostrarDetalle(item);
                 tr.innerHTML = `
                     <td style="display:${(esAdmin || p.salidas) ? 'table-cell' : 'none'}">
                         <button class="btn-add-item" onclick="event.stopPropagation(); agregar('${item.id}')">+</button>
                     </td>
-                    <td>${item.modelo || '-'}</td>
-                    <td style="font-weight:bold;">${item.noParte || '-'}</td>
-                    <td>${item.nombre || '-'}</td>
+                    <td>${item.modelo || '-'}</td><td>${item.noParte || '-'}</td><td>${item.nombre || '-'}</td>
                     <td style="text-align:center; font-weight:bold; color:${item.cantidad < 3 ? 'red' : 'black'};">${item.cantidad || 0}</td>
-                    <td>${item.laboratorio || '-'}</td>
-                    <td>${item.rack || '-'}</td>
-                    <td>${item.contenedor || '-'}</td>
-                `;
+                    <td>${item.laboratorio || '-'}</td><td>${item.rack || '-'}</td><td>${item.contenedor || '-'}</td>`;
                 tbody.appendChild(tr);
             });
         }
@@ -209,93 +111,66 @@
             itemSeleccionado = item;
             document.getElementById('p-nombre').innerText = item.nombre;
             document.getElementById('p-detalles').innerHTML = `
-                <div><b>Modelo:</b> ${item.modelo || 'N/A'}</div>
-                <div><b>No. Parte:</b> ${item.noParte || 'N/A'}</div>
-                <div><b>Laboratorio:</b> ${item.laboratorio || 'N/A'}</div>
-                <div><b>Rack:</b> ${item.rack || 'N/A'}</div>
-                <div><b>Contenedor:</b> ${item.contenedor || 'N/A'}</div>
-                <div><b>Costo:</b> $${item.costo || 0}</div>
-                <div style="grid-column: span 2;"><b>Observaciones:</b> ${item.observaciones || 'Sin notas.'}</div>
-            `;
+                <div><b>Modelo:</b> ${item.modelo || 'N/A'}</div><div><b>No. Parte:</b> ${item.noParte || 'N/A'}</div>
+                <div><b>Lab:</b> ${item.laboratorio || 'N/A'}</div><div><b>Rack:</b> ${item.rack || 'N/A'}</div>
+                <div><b>Contenedor:</b> ${item.contenedor || 'N/A'}</div><div><b>Costo:</b> $${item.costo || 0}</div>
+                <div style="grid-column: span 2;"><b>Notas:</b> ${item.observaciones || 'Sin notas.'}</div>`;
 
             const img = document.getElementById('main-preview-img');
             const status = document.getElementById('status-foto');
             status.innerText = "Buscando foto...";
             
             try {
-                // Buscamos el ID de la imagen en Drive mediante el scriptURL
                 const res = await fetch(`${scriptURL}?itemName=${encodeURIComponent(item.nombre)}`);
                 const data = await res.json();
-                
                 if(data.result === "success" && data.id) {
-                    // Usamos el formato de miniatura de Drive que funciona universalmente
-                    img.src = `https://drive.google.com/thumbnail?id=${data.id}&sz=w1000`;
+                    // CAMBIO CLAVE: URL de previsualización correcta de Drive
+                    img.src = `https://lh3.googleusercontent.com/u/0/d/${data.id}`;
                     status.innerText = "✓ Encontrada en Drive";
                 } else {
                     img.src = "imagenes/sin_foto.jpg";
                     status.innerText = "Sin foto";
                 }
-            } catch (e) { 
-                img.src = "imagenes/sin_foto.jpg";
-                status.innerText = "Error de red"; 
-            }
+            } catch (e) { status.innerText = "Error de red"; }
         }
 
-        // LÓGICA DE SUBIDA
         const fileInput = document.getElementById('fileInput');
         const btnConfirmUp = document.getElementById('btnConfirmUp');
+        fileInput.onchange = () => { if(fileInput.files[0]) btnConfirmUp.style.display = 'block'; };
 
-        fileInput.onchange = () => {
-            if(fileInput.files[0]) btnConfirmUp.style.display = 'block';
-        };
-
-        btnConfirmUp.onclick = async () => {
-            if(!itemSeleccionado) return alert("Selecciona un material primero");
-            
+        btnConfirmUp.onclick = () => {
+            if(!itemSeleccionado) return alert("Selecciona un material");
             const file = fileInput.files[0];
-            const statusFoto = document.getElementById('status-foto');
-            statusFoto.innerText = "SUBIENDO...";
-            btnConfirmUp.disabled = true;
-
             const reader = new FileReader();
+            reader.readAsDataURL(file);
             reader.onload = async () => {
+                document.getElementById('status-foto').innerText = "SUBIENDO...";
+                btnConfirmUp.disabled = true;
                 const base64 = reader.result.split(',')[1];
                 try {
                     const res = await fetch(scriptURL, {
                         method: "POST",
                         body: JSON.stringify({
-                            itemName: itemSeleccionado.nombre,
-                            imageB64: base64
+                            base64: base64,
+                            type: file.type,
+                            name: itemSeleccionado.nombre
                         })
                     });
                     const d = await res.json();
                     if(d.result === "success") {
-                        alert("¡Imagen guardada en Drive!");
+                        alert("¡Imagen guardada!");
                         btnConfirmUp.style.display = 'none';
-                        fileInput.value = '';
-                        mostrarDetalle(itemSeleccionado); // Recargar visor
-                    } else {
-                        alert("Error: " + d.message);
+                        mostrarDetalle(itemSeleccionado);
                     }
-                } catch (e) { alert("Error al conectar con el servidor"); }
+                } catch (e) { alert("Error al subir"); }
                 btnConfirmUp.disabled = false;
             };
-            reader.readAsDataURL(file);
         };
 
-        // Carrito y Salidas
         window.agregar = (id) => {
             const prod = productos.find(x => x.id === id);
-            const enCarro = carrito.find(x => x.id === id);
-            
-            if(enCarro) {
-                if(enCarro.cOut + 1 > prod.cantidad) return alert("Stock insuficiente");
-                enCarro.cOut++;
-            } else {
-                if(prod.cantidad < 1) return alert("Sin stock");
-                carrito.push({...prod, cOut: 1});
-            }
-            dibujarCarrito();
+            if(prod.cantidad < 1) return alert("Sin stock");
+            carrito.push(prod); dibujarCarrito();
         };
 
         function dibujarCarrito() {
@@ -303,46 +178,25 @@
             if(carrito.length === 0) { list.innerHTML = "<i>Vacío</i>"; return; }
             list.innerHTML = carrito.map((item, i) => `
                 <div style="border-bottom:1px solid #eee; padding:3px; display:flex; justify-content:space-between; align-items:center; color:black;">
-                    <span style="font-size:11px;">${item.nombre} <b>(${item.cOut})</b></span>
+                    <span style="font-size:11px;">${item.nombre}</span>
                     <button onclick="carrito.splice(${i},1); dibujarCarrito();" style="color:red; border:none; background:none; cursor:pointer;">✕</button>
-                </div>
-            `).join('');
+                </div>`).join('');
         }
 
         window.procesarSalida = async () => {
             const r = document.getElementById('recep').value;
             const py = document.getElementById('proyec').value;
-            if(!r || !py || carrito.length === 0) return alert("Faltan datos o el carrito está vacío");
-
+            if(!r || !py || carrito.length === 0) return alert("Faltan datos");
             if(confirm("¿Generar vale y descontar stock?")) {
-                document.getElementById('f-fec').innerText = new Date().toLocaleDateString();
-                document.getElementById('f-alm').innerText = user.usuario;
-                document.getElementById('f-rec').innerText = r;
-                document.getElementById('f-pro').innerText = py;
-                document.getElementById('f-lista').innerHTML = carrito.map(i => `
-                    <tr><td>${i.cOut} PZ</td><td>${i.modelo}</td><td>${i.noParte}</td><td>${i.nombre}</td></tr>
-                `).join('');
-
-                for (const item of carrito) {
-                    await updateDoc(doc(db, "productos", item.id), { cantidad: increment(-item.cOut) });
-                }
-                
-                window.print();
-                carrito = []; 
-                dibujarCarrito();
-                document.getElementById('recep').value = ''; 
-                document.getElementById('proyec').value = '';
+                document.getElementById('f-lista').innerHTML = carrito.map(i => `<tr><td>1 PZ</td><td>${i.modelo}</td><td>${i.noParte}</td><td>${i.nombre}</td></tr>`).join('');
+                for (const item of carrito) { await updateDoc(doc(db, "productos", item.id), { cantidad: increment(-1) }); }
+                window.print(); carrito = []; dibujarCarrito();
             }
         };
 
-        // Buscador
         document.getElementById('mainSearch').oninput = (e) => {
             const t = e.target.value.toLowerCase();
-            renderTable(productos.filter(p => 
-                (p.nombre||'').toLowerCase().includes(t) || 
-                (p.noParte||'').toLowerCase().includes(t) || 
-                (p.modelo||'').toLowerCase().includes(t)
-            ));
+            renderTable(productos.filter(p => (p.nombre||'').toLowerCase().includes(t) || (p.noParte||'').toLowerCase().includes(t) || (p.modelo||'').toLowerCase().includes(t)));
         };
     </script>
 </body>
