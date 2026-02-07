@@ -95,11 +95,16 @@
             background: #f9f9f9;
         }
 
+        /* CONTROLES DE SUBIDA - MEJORADOS */
         .upload-controls { 
             margin-top: 15px;
             display: none; 
             flex-direction: column;
             gap: 8px;
+            background: #f1f1f1;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
         }
         
         .upload-controls.active { 
@@ -110,20 +115,24 @@
             padding: 8px 15px !important;
             font-size: 13px !important;
             border-radius: 5px !important;
+            cursor: pointer;
+            font-weight: bold;
+            border: none;
+        }
+        
+        .btn-sel {
+            background: #7f8c8d !important; 
+            color: white !important;
         }
         
         .btn-up { 
-            background: #27ae60 !important; 
-            color: white !important; 
-            border: none !important; 
-            padding: 8px 15px !important; 
-            cursor: pointer !important; 
-            font-weight: bold !important; 
+            background: #3498db !important; 
+            color: white !important;
             display: none !important; 
         }
         
         .btn-up:hover { 
-            background: #2ecc71 !important; 
+            background: #2980b9 !important; 
         }
 
         .preview-info-box { 
@@ -417,15 +426,17 @@
         </section>
     </div>
 
-    <!-- VISOR INFERIOR MEJORADO -->
+    <!-- VISOR INFERIOR MEJORADO CON BOTÓN DE SUBIR -->
     <div class="bottom-preview">
         <div class="preview-image-box">
             <span id="status-foto" style="font-size:12px; color:#2980b9; font-weight:bold; margin-bottom:8px;">Selecciona un material para ver detalles</span>
             <img id="main-preview-img" src="imagenes/sin_foto.jpg" alt="Vista previa">
             
             <div class="upload-controls" id="upload-box-drive">
-                <input type="file" id="fileDrive" accept="image/*" style="font-size:12px; width:100%; padding: 5px;">
+                <button class="btn-sel" onclick="document.getElementById('fileDrive').click()">📁 Elegir imagen</button>
+                <input type="file" id="fileDrive" accept="image/*" style="display:none;">
                 <button id="btnSubirDrive" class="btn-up">🚀 Subir a Drive</button>
+                <div id="file-name" style="font-size:11px; color:#666; margin-top:5px; display:none;"></div>
             </div>
         </div>
 
@@ -530,6 +541,23 @@
             document.getElementById('upload-box-drive').classList.add('active');
         }
 
+        // Configurar el input file para mostrar nombre del archivo
+        const fileInput = document.getElementById('fileDrive');
+        const fileNameDisplay = document.getElementById('file-name');
+        const btnSubirDrive = document.getElementById('btnSubirDrive');
+        
+        fileInput.addEventListener('change', function(e) {
+            if(this.files && this.files[0]) {
+                const fileName = this.files[0].name;
+                fileNameDisplay.textContent = "Archivo: " + fileName;
+                fileNameDisplay.style.display = 'block';
+                btnSubirDrive.style.display = 'block';
+            } else {
+                fileNameDisplay.style.display = 'none';
+                btnSubirDrive.style.display = 'none';
+            }
+        });
+
         // Firestore Realtime
         onSnapshot(collection(db, "productos"), (snap) => {
             productos = [];
@@ -597,9 +625,9 @@
                         statusFoto.style.color = "#e74c3c";
                     }
 
+                    // Configurar el botón de subir para el producto actual
                     if(puedeSubirImg) {
-                        document.getElementById('btnSubirDrive').onclick = () => subirADrive(nombreFoto);
-                        document.getElementById('btnSubirDrive').style.display = 'block';
+                        btnSubirDrive.onclick = () => subirADrive(nombreFoto);
                     }
                 };
 
@@ -619,28 +647,44 @@
             });
         }
 
-        // LÓGICA DE SUBIDA DE IMÁGENES
+        // LÓGICA DE SUBIDA DE IMÁGENES - MEJORADA
         async function subirADrive(nombreProducto) {
-            const fileInput = document.getElementById('fileDrive');
             const file = fileInput.files[0];
             if(!file) return alert("Por favor, selecciona una imagen primero");
+
+            // Validar tipo de archivo
+            if(!file.type.startsWith('image/')) {
+                alert("Por favor, selecciona solo archivos de imagen (JPG, PNG, etc.)");
+                return;
+            }
+
+            // Validar tamaño (máximo 5MB)
+            if(file.size > 5 * 1024 * 1024) {
+                alert("La imagen es demasiado grande. Máximo 5MB");
+                return;
+            }
 
             const reader = new FileReader();
             reader.readAsDataURL(file);
             reader.onload = async () => {
                 const base64 = reader.result.split(',')[1];
-                const btn = document.getElementById('btnSubirDrive');
                 const statusFoto = document.getElementById('status-foto');
                 
-                btn.innerText = "Subiendo...";
-                btn.disabled = true;
+                btnSubirDrive.innerText = "Subiendo...";
+                btnSubirDrive.disabled = true;
                 statusFoto.innerText = "Subiendo imagen a Google Drive...";
                 statusFoto.style.color = "#3498db";
                 
                 try {
                     const res = await fetch(scriptURL, {
                         method: "POST",
-                        body: JSON.stringify({ itemName: nombreProducto, imageB64: base64 })
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ 
+                            itemName: nombreProducto, 
+                            imageB64: base64 
+                        })
                     });
                     const data = await res.json();
                     if(data.result === "success") {
@@ -649,22 +693,26 @@
                         statusFoto.innerText = "✓ Imagen actualizada en Google Drive";
                         statusFoto.style.color = "#27ae60";
                         
-                        // Limpiar input de archivo
+                        // Limpiar y resetear
                         fileInput.value = "";
-                        btn.style.display = 'none';
+                        fileNameDisplay.style.display = 'none';
+                        btnSubirDrive.style.display = 'none';
+                        btnSubirDrive.disabled = false;
+                        btnSubirDrive.innerText = "🚀 Subir a Drive";
                     } else {
-                        alert("Error al subir la imagen");
+                        alert("Error al subir la imagen: " + (data.message || "Error desconocido"));
                         statusFoto.innerText = "Error al subir la imagen";
                         statusFoto.style.color = "#e74c3c";
+                        btnSubirDrive.disabled = false;
+                        btnSubirDrive.innerText = "🚀 Subir a Drive";
                     }
                 } catch(e) { 
                     alert("Error de conexión al subir la imagen"); 
                     statusFoto.innerText = "Error de conexión";
                     statusFoto.style.color = "#e74c3c";
+                    btnSubirDrive.disabled = false;
+                    btnSubirDrive.innerText = "🚀 Subir a Drive";
                 }
-                
-                btn.innerText = "🚀 Subir a Drive";
-                btn.disabled = false;
             };
         }
 
