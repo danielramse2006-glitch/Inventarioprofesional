@@ -1,112 +1,118 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>Importar - Sistema de Inventario</title>
+    <meta charset="UTF-8"><title>Importar Datos - Inventario</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
-        .import-container { max-width: 900px; margin: 20px auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
-        .file-upload-area { border: 3px dashed #0099cc; border-radius: 10px; padding: 40px; text-align: center; background: #f8fbff; cursor: pointer; }
-        .progress-bar { width: 100%; height: 25px; background: #eee; border-radius: 12px; overflow: hidden; margin: 15px 0; }
-        .progress-fill { height: 100%; background: #27ae60; width: 0%; transition: width 0.3s; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 12px; }
-        .log-area { background: #2c3e50; color: #ecf0f1; padding: 15px; border-radius: 8px; max-height: 250px; overflow-y: auto; font-family: monospace; font-size: 12px; margin-top: 15px; }
+        .import-container { max-width: 800px; margin: 20px auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .log-box { background: #222; color: #0f0; padding: 15px; height: 300px; overflow-y: auto; font-family: monospace; font-size: 12px; margin-top: 20px; border-radius: 5px; }
+        .error-msg { color: #ff6b6b; }
+        .success-msg { color: #51cf66; }
+        progress { width: 100%; height: 20px; margin-top: 10px; }
     </style>
 </head>
 <body class="bg-blue">
     <div class="import-container">
-        <h2 style="color:#003366; text-align:center;">📦 Importación Masiva JSON</h2>
-        <div class="file-upload-area" id="dropArea">
-            <h3 style="margin:0; color: #333;">Arrastra tu JSON aquí o haz clic</h3>
-            <input type="file" id="fileInput" accept=".json" style="display: none;">
-        </div>
+        <h2 style="color:#333; text-align:center;">Masive Import (CSV)</h2>
+        <p style="font-size:13px; color:#666;">Selecciona un archivo .csv con las columnas: <br><b>modelo, noParte, nombre, cantidad, costo, laboratorio, rack, contenedor</b></p>
+        
+        <input type="file" id="csvFile" accept=".csv" style="margin: 20px 0;">
+        <progress id="importProgress" value="0" max="100"></progress>
+        <p id="progressText" style="text-align:center; font-weight:bold; color:#333;">Esperando archivo...</p>
+        
+        <button id="btnImport" class="btn-action" style="width:100%; background:#27ae60; color:white;">INICIAR IMPORTACIÓN</button>
+        <button onclick="location.href='index.html'" class="btn-action" style="width:100%; margin-top:10px;">VOLVER AL PANEL</button>
 
-        <div id="fileInfo" style="display:none; margin-top:15px; background:#f0f7ff; padding:10px; border-radius:5px; color:#333;">
-            <strong>Archivo:</strong> <span id="fileName"></span> | <strong>Registros:</strong> <span id="recordCount">0</span>
-        </div>
-
-        <div class="progress-bar" id="progressContainer" style="display:none;">
-            <div class="progress-fill" id="progressFill">0%</div>
-        </div>
-
-        <div class="log-area" id="logArea" style="display:none;"></div>
-
-        <button id="btnImport" disabled style="width:100%; margin-top:20px; padding:15px; background:#27ae60; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">INICIAR IMPORTACIÓN</button>
-        <button onclick="location.href='index.html'" style="width:100%; margin-top:10px; padding:10px; background:#95a5a6; color:white; border:none; border-radius:8px; cursor:pointer;">VOLVER AL INICIO</button>
+        <div class="log-box" id="log">--- LOG DE OPERACIONES ---</div>
     </div>
 
     <script type="module">
         import { db, checkAuth } from './config.js';
-        import { collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { collection, addDoc, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        
+        checkAuth('registrar');
 
-        checkAuth();
-        const dropArea = document.getElementById('dropArea');
-        const fileInput = document.getElementById('fileInput');
-        const logArea = document.getElementById('logArea');
         const btnImport = document.getElementById('btnImport');
-        let validRecords = [];
+        const fileInput = document.getElementById('csvFile');
+        const logBox = document.getElementById('log');
+        const progress = document.getElementById('importProgress');
+        const progressText = document.getElementById('progressText');
 
-        dropArea.onclick = () => fileInput.click();
-        fileInput.onchange = (e) => handleFile(e.target.files[0]);
-
-        function handleFile(file) {
-            if (!file || !file.name.endsWith('.json')) return;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const data = JSON.parse(e.target.result);
-                document.getElementById('fileName').textContent = file.name;
-                document.getElementById('recordCount').textContent = data.length;
-                document.getElementById('fileInfo').style.display = 'block';
-                
-                validRecords = data.map(r => ({
-                    modelo: r.MODELO || "",
-                    noParte: String(r["NUMERO DE PARTE"] || "").trim(),
-                    nombre: r.NOMBRE_PIEZA || "",
-                    descripcion: r.DESCRIPCION || "",
-                    cantidad: Number(r.CANTIDAD) || 0,
-                    costo: Number(r.COSTO) || 0,
-                    lote: r.LOTE || "",
-                    estado: r.ESTADO || "",
-                    observaciones: r.OBSERVACIONES || "",
-                    // Campos individuales solicitados
-                    consumible: r.Consumible || "",
-                    pieza: r.Pieza || "",
-                    herramienta: r.Herramienta || "",
-                    equipo: r.Equipo || "",
-                    laboratorio: r.Laboratorio || "",
-                    rack: r.Rack || "",
-                    contenedor: r.Contenedor || ""
-                })).filter(r => r.noParte !== "");
-                btnImport.disabled = false;
-            };
-            reader.readAsText(file);
+        function addLog(msg, type = '') {
+            const div = document.createElement('div');
+            div.className = type === 'error' ? 'error-msg' : (type === 'success' ? 'success-msg' : '');
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            logBox.appendChild(div);
+            logBox.scrollTop = logBox.scrollHeight;
         }
 
-        btnImport.onclick = async () => {
-            btnImport.disabled = true;
-            logArea.style.display = 'block';
-            document.getElementById('progressContainer').style.display = 'block';
-            
-            for (let i = 0; i < validRecords.length; i++) {
-                const rec = validRecords[i];
-                const p = Math.round(((i + 1) / validRecords.length) * 100);
-                document.getElementById('progressFill').style.width = p + '%';
-                document.getElementById('progressFill').textContent = p + '%';
+        btnImport.onclick = () => {
+            const file = fileInput.files[0];
+            if (!file) return alert("Selecciona un archivo primero");
 
-                try {
-                    const q = query(collection(db, "productos"), where("noParte", "==", rec.noParte));
-                    const snap = await getDocs(q);
-                    if (snap.empty) {
-                        await addDoc(collection(db, "productos"), rec);
-                        logArea.innerHTML += `<div style="color:#2ecc71">✅ ${rec.noParte} importado</div>`;
-                    } else {
-                        logArea.innerHTML += `<div style="color:#f39c12">⚠️ ${rec.noParte} ya existe</div>`;
+            btnImport.disabled = true;
+            addLog("Iniciando lectura de archivo...", "info");
+
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                complete: async (results) => {
+                    const data = results.data;
+                    let importados = 0;
+                    let duplicados = 0;
+                    let errores = 0;
+
+                    for (let i = 0; i < data.length; i++) {
+                        const row = data[i];
+                        const np = row.noParte?.trim();
+
+                        if (!np) {
+                            addLog(`Fila ${i+1}: NoParte vacío, saltando.`, "error");
+                            errores++;
+                            continue;
+                        }
+
+                        try {
+                            // Validar si ya existe
+                            const q = query(collection(db, "productos"), where("noParte", "==", np));
+                            const snap = await getDocs(q);
+
+                            if (snap.empty) {
+                                await addDoc(collection(db, "productos"), {
+                                    modelo: row.modelo || '',
+                                    noParte: np,
+                                    nombre: row.nombre || 'Sin nombre',
+                                    cantidad: Number(row.cantidad) || 0,
+                                    costo: Number(row.costo) || 0,
+                                    laboratorio: row.laboratorio || '',
+                                    rack: row.rack || '',
+                                    contenedor: row.contenedor || '',
+                                    fechaImport: serverTimestamp()
+                                });
+                                importados++;
+                                addLog(`✅ Importado: ${np}`, "success");
+                            } else {
+                                duplicados++;
+                                addLog(`⚠️ Duplicado: ${np} (Omitido)`, "");
+                            }
+                        } catch (e) {
+                            errores++;
+                            addLog(`❌ Error en ${np}: ${e.message}`, "error");
+                        }
+
+                        // Actualizar barra
+                        const p = Math.round(((i + 1) / data.length) * 100);
+                        progress.value = p;
+                        progressText.textContent = `Procesando: ${p}%`;
                     }
-                } catch (err) {
-                    logArea.innerHTML += `<div style="color:#e74c3c">❌ Error en ${rec.noParte}</div>`;
+
+                    addLog(`--- PROCESO TERMINADO ---`);
+                    addLog(`Éxito: ${importados} | Duplicados: ${duplicados} | Errores: ${errores}`);
+                    alert("Importación finalizada. Revisa el log.");
+                    btnImport.disabled = false;
                 }
-                logArea.scrollTop = logArea.scrollHeight;
-            }
-            alert("Importación finalizada");
+            });
         };
     </script>
 </body>
