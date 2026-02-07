@@ -222,7 +222,7 @@
             status.innerText = "Buscando foto...";
             
             try {
-                const res = await fetch(`${scriptURL}?action=get&itemName=${encodeURIComponent(item.nombre)}`);
+                const res = await fetch(`${scriptURL}?itemName=${encodeURIComponent(item.nombre)}`);
                 const data = await res.json();
                 if(data.result === "success") {
                     img.src = `https://lh3.googleusercontent.com/u/0/d/${data.id}`;
@@ -271,9 +271,8 @@
                             'Content-Type': 'text/plain',
                         },
                         body: JSON.stringify({
-                            base64: base64,
-                            type: file.type,
-                            name: itemSeleccionado.nombre
+                            itemName: itemSeleccionado.nombre,
+                            imageB64: base64
                         })
                     });
                     
@@ -300,7 +299,7 @@
                     } else {
                         statusFoto.innerText = "❌ Error al subir";
                         statusFoto.style.color = "#e74c3c";
-                        alert("❌ Error: " + (d.message || "Error desconocido"));
+                        alert("❌ Error: " + (d.error || d.message || "Error desconocido"));
                     }
                 } catch (e) { 
                     console.error("Error al subir:", e);
