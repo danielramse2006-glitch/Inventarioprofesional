@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Importar Inventario Real</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .import-container { max-width: 850px; margin: 30px auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
+        .log-box { background: #1a1a1a; color: #2ecc71; padding: 15px; height: 350px; overflow-y: auto; font-family: monospace; font-size: 12px; margin-top: 20px; border-radius: 6px; }
+        .error-msg { color: #ff4757; }
+        .success-msg { color: #2ed573; }
+        .warning-msg { color: #ffa502; }
+        progress { width: 100%; height: 25px; margin-top: 15px; }
+    </style>
+</head>
+<body class="bg-blue">
+    <div class="import-container">
+        <h2 style="color:#2c3e50; text-align:center;">📤 Importar Catálogo Almacén</h2>
+        <p style="text-align:center; color:#666;">Detectado: Estructura "ALMACEN CATALOGO"</p>
+        <p style="text-align:center; color:#e67e22; font-weight:bold;">⚠️ Si el No. Parte ya existe, se ACTUALIZARÁ la cantidad</p>
+
+        <input type="file" id="jsonFile" accept=".json" style="display:block; margin: 20px auto;">
+        
+        <progress id="importProgress" value="0" max="100"></progress>
+        <p id="progressText" style="text-align:center; font-weight:bold;">Listo para iniciar</p>
+        
+        <button id="btnImport" class="btn-action" style="width:100%; background:#27ae60; color:white; height:50px;">▶ SUBIR A FIREBASE</button>
+        <button onclick="location.href='index.html'" class="btn-action" style="width:100%; margin-top:10px;">VOLVER</button>
+
+        <div class="log-box" id="log">--- LOG DE CARGA ---</div>
+    </div>
+
+    <script type="module">
+        import { db, checkAuth } from './config.js';
+        import { collection, addDoc, query, where, getDocs, doc, updateDoc, increment, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        
+        const user = checkAuth('registrar');
+
+        const btnImport = document.getElementById('btnImport');
+        const fileInput = document.getElementById('jsonFile');
+        const logBox = document.getElementById('log');
+        const progress = document.getElementById('importProgress');
+        const progressText = document.getElementById('progressText');
+
+        function addLog(msg, type = '') {
+            const div = document.createElement('div');
+            if(type === 'error') div.className = 'error-msg';
+            if(type === 'success') div.className = 'success-msg';
+            if(type === 'warning') div.className = 'warning-msg';
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            logBox.appendChild(div);
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        btnImport.onclick = () => {
+            const file = fileInput.files[0];
+            if (!file) return alert("Selecciona el archivo");
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const rawData = JSON.parse(e.target.result);
+                    const items = rawData["ALMACEN CATALOGO"];
+                    
+                    if (!items) throw new Error("No se encontró la hoja 'ALMACEN CATALOGO'");
+
+                    btnImport.disabled = true;
+                    addLog(`Iniciando carga de ${items.length} filas...`, "success");
+
+                    let nuevos = 0;
+                    let actualizados = 0;
+
+                    for (let i = 0; i < items.length; i++) {
+                        const row = items[i];
+                        
+                        // Saltamos las filas de encabezados del Excel
+                        if (row["__EMPTY"] === "NUM. LISTA" || row["__EMPTY_13"] === "Laboratorio") continue;
+
+                        const noParte = (row["__EMPTY_2"] || "").toString().trim();
+                        const nombre = (row["__EMPTY_3"] || "").toString().replace(/_/g, ' ').trim();
+
+                        // Si no hay dato clave, saltar
+                        if (!noParte && !nombre) continue;
+
+                        const idFinal = noParte || nombre;
+                        const cantidadNueva = Number(row["__EMPTY_8"] || 0);
+
+                        try {
+                            const q = query(collection(db, "productos"), where("noParte", "==", idFinal));
+                            const snap = await getDocs(q);
+
+                            if (snap.empty) {
+                                // PRODUCTO NUEVO - CREAR
+                                await addDoc(collection(db, "productos"), {
+                                    modelo: row["__EMPTY_1"] || "",
+                                    noParte: idFinal,
+                                    nombre: nombre,
+                                    descripcion: row["__EMPTY_5"] || "",
+                                    observaciones: row["__EMPTY_6"] || "",
+                                    cantidad: cantidadNueva,
+                                    laboratorio: row["__EMPTY_13"] || "",
+                                    rack: row["__EMPTY_14"] || "",
+                                    contenedor: row["__EMPTY_15"] || "",
+                                    costo: Number(row["__EMPTY_17"] || 0),
+                                    fechaCarga: serverTimestamp()
+                                });
+                                nuevos++;
+                                addLog(`✅ NUEVO: ${idFinal} (${cantidadNueva} pzs)`, "success");
+                            } else {
+                                // PRODUCTO EXISTENTE - ACTUALIZAR CANTIDAD
+                                const docId = snap.docs[0].id;
+                                const cantidadAnterior = snap.docs[0].data().cantidad || 0;
+                                
+                                await updateDoc(doc(db, "productos", docId), {
+                                    cantidad: cantidadNueva,
+                                    modelo: row["__EMPTY_1"] || "",
+                                    nombre: nombre,
+                                    descripcion: row["__EMPTY_5"] || "",
+                                    observaciones: row["__EMPTY_6"] || "",
+                                    laboratorio: row["__EMPTY_13"] || "",
+                                    rack: row["__EMPTY_14"] || "",
+                                    contenedor: row["__EMPTY_15"] || "",
+                                    costo: Number(row["__EMPTY_17"] || 0),
+                                    fechaActualizacion: serverTimestamp()
+                                });
+                                actualizados++;
+                                addLog(`🔄 ACTUALIZADO: ${idFinal} (${cantidadAnterior} → ${cantidadNueva})`, "warning");
+                            }
+                        } catch (err) {
+                            addLog(`❌ Error en ${idFinal}: ${err.message}`, "error");
+                        }
+
+                        // Progreso
+                        const p = Math.round(((i + 1) / items.length) * 100);
+                        progress.value = p;
+                        progressText.textContent = `Progreso: ${p}%`;
+                    }
+
+                    addLog(`--- PROCESO TERMINADO ---`, "success");
+                    addLog(`✅ ${nuevos} PRODUCTOS NUEVOS`, "success");
+                    addLog(`🔄 ${actualizados} PRODUCTOS ACTUALIZADOS`, "warning");
+                    btnImport.disabled = false;
+                    alert(`Carga completa:\n${nuevos} nuevos\n${actualizados} actualizados`);
+
+                } catch (err) {
+                    alert("Error: " + err.message);
+                    addLog("❌ Error crítico al leer el archivo", "error");
+                }
+            };
+            reader.readAsText(file);
+        };
+    </script>
+</body>
+</html>

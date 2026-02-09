@@ -1,0 +1,351 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Devolución de Material</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body { 
+            background: #3498db; 
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .dev-container { 
+            max-width: 900px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            box-sizing: border-box;
+        }
+        .busqueda-section { 
+            background: #ecf0f1; 
+            padding: 25px; 
+            border-radius: 8px; 
+            margin-bottom: 25px; 
+            border-left: 5px solid #3498db;
+        }
+        .producto-card { 
+            background: #f9f9f9; 
+            border: 2px solid #27ae60; 
+            padding: 20px; 
+            border-radius: 8px; 
+            margin-bottom: 20px; 
+            display: flex; 
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .producto-info { flex: 1; min-width: 300px; }
+        .producto-info strong { color: #2c3e50; display: block; margin-bottom: 5px; }
+        .producto-info small { color: #7f8c8d; display: inline-block; margin-right: 15px; }
+        .btn-devolver { 
+            background: #27ae60; 
+            color: white; 
+            border: none; 
+            padding: 12px 25px; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-weight: bold;
+            font-size: 16px;
+            white-space: nowrap;
+        }
+        .btn-devolver:hover { background: #2ecc71; }
+        .btn-devolver:disabled { 
+            background: #95a5a6; 
+            cursor: not-allowed;
+        }
+        .form-devolucion { 
+            background: white; 
+            padding: 15px; 
+            border-radius: 5px; 
+            margin-top: 15px;
+            border: 1px solid #ddd;
+        }
+        .form-group { 
+            margin-bottom: 15px; 
+        }
+        .form-group label { 
+            display: block; 
+            margin-bottom: 5px; 
+            font-weight: bold; 
+            color: #2c3e50;
+        }
+        .form-group input { 
+            width: 100%; 
+            padding: 10px; 
+            border: 1px solid #ccc; 
+            border-radius: 5px; 
+            box-sizing: border-box;
+        }
+        .stock-info {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .stock-bajo { background: #ffeaa7; color: #856404; }
+        .stock-normal { background: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <div class="dev-container">
+        <h2 style="color:#2c3e50; text-align:center; margin-top:0;">↩️ DEVOLUCIÓN DE MATERIAL AL INVENTARIO</h2>
+        <p style="text-align:center; color:#666; margin-bottom:20px;">Registra la devolución de material al stock del almacén</p>
+        
+        <div class="busqueda-section">
+            <h3 style="margin-top:0; color:#2c3e50;">🔍 Buscar Producto para Devolución</h3>
+            <input type="text" id="busqueda" placeholder="Ingresa No. de Parte, Nombre o Modelo..." 
+                   style="width:100%; padding:12px; border:2px solid #3498db; border-radius:5px; box-sizing:border-box; margin-bottom:10px;">
+            <button id="btnBuscar" class="btn-action" style="width:100%; background:#3498db; color:white; padding:12px; font-size:16px;">
+                🔍 BUSCAR PRODUCTO
+            </button>
+        </div>
+
+        <div id="resultado">
+            <p style="text-align:center; color:#999; padding:40px 0;">
+                Busca un producto para comenzar la devolución
+            </p>
+        </div>
+
+        <div style="text-align:center; margin-top:30px;">
+            <button onclick="location.href='movimientos.html'" class="btn-action" style="background:#9b59b6; color:white; margin-right:10px;">
+                📋 VER HISTORIAL
+            </button>
+            <button onclick="location.href='index.html'" class="btn-action" style="background:#2c3e50; color:white;">
+                🏠 VOLVER AL INICIO
+            </button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { db, checkAuth } from './config.js';
+        import { collection, query, where, getDocs, doc, updateDoc, increment, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        
+        const user = checkAuth();
+        let productoEncontrado = null;
+
+        document.getElementById('btnBuscar').onclick = buscarProducto;
+        document.getElementById('busqueda').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') buscarProducto();
+        });
+
+        async function buscarProducto() {
+            const busqueda = document.getElementById('busqueda').value.trim();
+            if(!busqueda) {
+                alert("Por favor, escribe algo para buscar");
+                return;
+            }
+
+            const resultadoDiv = document.getElementById('resultado');
+            resultadoDiv.innerHTML = '<p style="text-align:center; color:#3498db; padding:20px;">Buscando producto...</p>';
+
+            try {
+                // Buscar por número de parte (búsqueda exacta)
+                const q1 = query(collection(db, "productos"), where("noParte", "==", busqueda));
+                let snap = await getDocs(q1);
+                
+                if(snap.empty) {
+                    // Buscar por nombre (búsqueda parcial)
+                    const todosProductos = await getDocs(collection(db, "productos"));
+                    const encontrados = todosProductos.docs.filter(d => {
+                        const data = d.data();
+                        const nombre = (data.nombre || '').toLowerCase();
+                        const modelo = (data.modelo || '').toLowerCase();
+                        const noParte = (data.noParte || '').toLowerCase();
+                        const busquedaLower = busqueda.toLowerCase();
+                        
+                        return nombre.includes(busquedaLower) || 
+                               modelo.includes(busquedaLower) || 
+                               noParte.includes(busquedaLower);
+                    });
+                    
+                    if(encontrados.length > 0) {
+                        if(encontrados.length === 1) {
+                            productoEncontrado = { id: encontrados[0].id, ...encontrados[0].data() };
+                            mostrarProducto();
+                        } else {
+                            // Mostrar múltiples resultados
+                            mostrarMultiplesResultados(encontrados);
+                        }
+                    } else {
+                        resultadoDiv.innerHTML = `
+                            <p style="text-align:center; color:#e74c3c; font-weight:bold; padding:30px;">
+                                ❌ Producto no encontrado<br>
+                                <small>Intenta con el número de parte exacto</small>
+                            </p>
+                        `;
+                    }
+                } else {
+                    productoEncontrado = { id: snap.docs[0].id, ...snap.docs[0].data() };
+                    mostrarProducto();
+                }
+            } catch (error) {
+                console.error("Error en búsqueda:", error);
+                resultadoDiv.innerHTML = `
+                    <p style="text-align:center; color:#e74c3c; font-weight:bold;">
+                        ❌ Error al buscar producto
+                    </p>
+                `;
+            }
+        }
+
+        function mostrarMultiplesResultados(productos) {
+            const lista = productos.map(p => {
+                const data = p.data();
+                return `
+                    <div class="producto-card" style="border-color:#f39c12; cursor:pointer;" onclick="seleccionarProducto('${p.id}')">
+                        <div class="producto-info">
+                            <strong>${data.nombre || 'Sin nombre'}</strong>
+                            <small><strong>Modelo:</strong> ${data.modelo || 'N/A'}</small>
+                            <small><strong>No. Parte:</strong> ${data.noParte || 'N/A'}</small>
+                            <small><strong>Stock:</strong> <span class="stock-info ${data.cantidad < 3 ? 'stock-bajo' : 'stock-normal'}">${data.cantidad || 0} pzs</span></small>
+                        </div>
+                        <button class="btn-devolver" style="background:#f39c12;" onclick="event.stopPropagation(); seleccionarProducto('${p.id}')">
+                            SELECCIONAR
+                        </button>
+                    </div>
+                `;
+            }).join('');
+            
+            document.getElementById('resultado').innerHTML = `
+                <h4 style="color:#2c3e50; margin-top:0;">🔍 Se encontraron ${productos.length} productos:</h4>
+                ${lista}
+            `;
+        }
+
+        window.seleccionarProducto = async (id) => {
+            try {
+                const docRef = doc(db, "productos", id);
+                const snap = await getDocs(query(collection(db, "productos"), where("__name__", "==", id)));
+                if(!snap.empty) {
+                    productoEncontrado = { id: snap.docs[0].id, ...snap.docs[0].data() };
+                    mostrarProducto();
+                }
+            } catch (error) {
+                console.error("Error al seleccionar:", error);
+            }
+        };
+
+        function mostrarProducto() {
+            const p = productoEncontrado;
+            const stockClass = (p.cantidad || 0) < 3 ? 'stock-bajo' : 'stock-normal';
+            
+            document.getElementById('resultado').innerHTML = `
+                <div class="producto-card">
+                    <div class="producto-info">
+                        <strong style="font-size:20px; color:#27ae60;">✅ ${p.nombre || 'Sin nombre'}</strong>
+                        <div style="margin:10px 0;">
+                            <small><strong>Modelo:</strong> ${p.modelo || 'N/A'}</small><br>
+                            <small><strong>No. Parte:</strong> <strong style="color:#2c3e50;">${p.noParte || 'N/A'}</strong></small><br>
+                            <small><strong>Ubicación:</strong> ${p.laboratorio || 'N/A'} / ${p.rack || 'N/A'} / ${p.contenedor || 'N/A'}</small>
+                        </div>
+                        
+                        <div class="stock-info ${stockClass}" style="display:inline-block; padding:8px 15px; margin:10px 0;">
+                            <strong>STOCK ACTUAL:</strong> ${p.cantidad || 0} piezas
+                        </div>
+                        
+                        <div class="form-devolucion">
+                            <div class="form-group">
+                                <label>📦 Cantidad a Devolver:</label>
+                                <input type="number" id="cantDev" min="1" max="999" value="1" style="font-size:18px; font-weight:bold;">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>👤 ¿Quién devuelve el material?</label>
+                                <input type="text" id="quienDev" placeholder="Nombre de la persona que devuelve" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>📝 Observaciones (opcional):</label>
+                                <input type="text" id="observaciones" placeholder="Ej: Material sobrante, devolución de préstamo, etc.">
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn-devolver" onclick="confirmarDevolucion()">
+                        ✅ REGISTRAR DEVOLUCIÓN
+                    </button>
+                </div>
+            `;
+        }
+
+        window.confirmarDevolucion = async () => {
+            const cantidadInput = document.getElementById('cantDev');
+            const quienDevuelveInput = document.getElementById('quienDev');
+            
+            const cantidad = parseInt(cantidadInput.value);
+            const quienDevuelve = quienDevuelveInput.value.trim();
+            const observaciones = document.getElementById('observaciones').value.trim();
+            
+            // Validaciones
+            if(!cantidad || cantidad < 1 || cantidad > 999) {
+                alert("Ingresa una cantidad válida (1-999)");
+                cantidadInput.focus();
+                return;
+            }
+            
+            if(!quienDevuelve) {
+                alert("Indica quién devuelve el material");
+                quienDevuelveInput.focus();
+                return;
+            }
+            
+            const stockNuevo = (productoEncontrado.cantidad || 0) + cantidad;
+            
+            if(confirm(`¿Confirmar devolución?\n\n• Producto: ${productoEncontrado.nombre}\n• Cantidad: ${cantidad} unidades\n• Devuelto por: ${quienDevuelve}\n\nStock anterior: ${productoEncontrado.cantidad || 0}\nStock nuevo: ${stockNuevo}`)) {
+                try {
+                    // 1. INCREMENTAR STOCK EN FIREBASE
+                    await updateDoc(doc(db, "productos", productoEncontrado.id), {
+                        cantidad: increment(cantidad),
+                        fechaUltimaDevolucion: serverTimestamp()
+                    });
+
+                    // 2. REGISTRAR MOVIMIENTO DE DEVOLUCIÓN
+                    await addDoc(collection(db, "movimientos"), {
+                        tipo: "ENTRADA",
+                        fecha: serverTimestamp(),
+                        receptor: quienDevuelve,
+                        almacenista: user.usuario,
+                        observaciones: observaciones || null,
+                        productos: [{
+                            id: productoEncontrado.id,
+                            modelo: productoEncontrado.modelo || '',
+                            noParte: productoEncontrado.noParte || '',
+                            nombre: productoEncontrado.nombre || '',
+                            cantidad: cantidad,
+                            cantidadAnterior: productoEncontrado.cantidad || 0,
+                            cantidadNueva: stockNuevo
+                        }],
+                        detalles: {
+                            tipoDevolucion: "Devolución manual",
+                            ubicacion: `${productoEncontrado.laboratorio || ''} / ${productoEncontrado.rack || ''} / ${productoEncontrado.contenedor || ''}`
+                        }
+                    });
+
+                    // 3. MOSTRAR CONFIRMACIÓN
+                    alert(`✅ Devolución registrada exitosamente!\n\n• ${cantidad} unidad(es) agregadas al stock\n• Stock actualizado: ${stockNuevo} unidades\n• Registrado en el historial de movimientos`);
+                    
+                    // 4. LIMPIAR Y PREPARAR PARA NUEVA BÚSQUEDA
+                    productoEncontrado = null;
+                    document.getElementById('busqueda').value = '';
+                    document.getElementById('resultado').innerHTML = `
+                        <p style="text-align:center; color:#27ae60; padding:30px; font-weight:bold;">
+                            ✅ Devolución completada<br>
+                            <small>Puedes buscar otro producto</small>
+                        </p>
+                    `;
+                    
+                } catch (error) {
+                    console.error("Error en devolución:", error);
+                    alert("❌ Error al registrar la devolución: " + error.message);
+                }
+            }
+        };
+    </script>
+</body>
+</html>

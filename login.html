@@ -1,0 +1,133 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8"><title>Login - Inventario</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .login-box { 
+            background: white; 
+            padding: 40px; 
+            border-radius: 12px; 
+            width: 380px; 
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        input {
+            width: 100%;
+            padding: 14px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        .login-info {
+            margin-top: 15px;
+            color: #666;
+            font-size: 13px;
+            text-align: left;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body style="background:#2c3e50; display:flex; justify-content:center; align-items:center; min-height:100vh; padding:20px;">
+    <div class="login-box">
+        <h2 style="color:#333; margin-bottom:30px;">🔐 INICIAR SESIÓN</h2>
+        <input type="text" id="user" placeholder="Usuario" autocomplete="username">
+        <input type="password" id="pass" placeholder="Contraseña" autocomplete="current-password">
+        <button id="btnLogin" class="btn-action" style="width:100%; background:#27ae60; color:white; padding:14px; font-size:16px;">ENTRAR AL SISTEMA</button>
+        
+        <div class="login-info">
+            <strong>Credenciales de prueba:</strong><br>
+            • Admin: usuario: <strong>admin</strong> / contraseña: <strong>******</strong><br>
+            • Usuarios normales deben estar registrados por el administrador
+        </div>
+    </div>
+    <script type="module">
+        import { db } from './config.js';
+        import { collection, query, where, getDocs, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        document.getElementById('btnLogin').onclick = async () => {
+            const u = document.getElementById('user').value.trim();
+            const p = document.getElementById('pass').value.trim();
+
+            if (!u || !p) {
+                alert("Por favor, completa ambos campos");
+                return;
+            }
+
+            let loginExitoso = false;
+            let tipoUsuario = '';
+
+            // Registrar intento de acceso (inicialmente como fallido)
+            try {
+                // Verificar si es admin
+                if (u === "admin" && p === "#Reyn0sa#") {
+                    loginExitoso = true;
+                    tipoUsuario = 'admin';
+                } else {
+                    // Verificar usuario en base de datos
+                    const q = query(collection(db, "usuarios"), where("usuario", "==", u), where("password", "==", p));
+                    const snap = await getDocs(q);
+                    if (!snap.empty) {
+                        loginExitoso = true;
+                        tipoUsuario = 'usuario';
+                    }
+                }
+
+                // REGISTRAR MOVIMIENTO DE ACCESO
+                await addDoc(collection(db, "movimientos"), {
+                    tipo: loginExitoso ? "ACCESO" : "ACCESO_FALLIDO",
+                    fecha: serverTimestamp(),
+                    usuario: u,
+                    descripcion: loginExitoso 
+                        ? "Inicio de sesión exitoso" 
+                        : "Intento de inicio de sesión fallido - Credenciales incorrectas",
+                    ip: "N/A", // Podrías agregar detección de IP si es necesario
+                    userAgent: navigator.userAgent.substring(0, 100)
+                });
+
+                if (loginExitoso) {
+                    if (tipoUsuario === 'admin') {
+                        sessionStorage.setItem("currentUser", JSON.stringify({ 
+                            usuario: 'admin',
+                            permisos: {
+                                registrar: true,
+                                actualizar: true,
+                                eliminar: true,
+                                salidas: true,
+                                subirImagenes: true
+                            }
+                        }));
+                    } else {
+                        // Para usuarios normales
+                        const q = query(collection(db, "usuarios"), where("usuario", "==", u), where("password", "==", p));
+                        const snap = await getDocs(q);
+                        const userData = snap.docs[0].data();
+                        sessionStorage.setItem("currentUser", JSON.stringify(userData));
+                    }
+                    
+                    // Mostrar mensaje de éxito
+                    alert(`✅ ¡Bienvenido ${u}!`);
+                    window.location.href = "index.html";
+                } else {
+                    alert("❌ Usuario o contraseña incorrectos");
+                }
+            } catch (error) {
+                console.error("Error en login:", error);
+                alert("Error en el servidor. Intenta nuevamente.");
+            }
+        };
+
+        // Permitir login con Enter
+        document.getElementById('pass').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('btnLogin').click();
+            }
+        });
+    </script>
+</body>
+</html>

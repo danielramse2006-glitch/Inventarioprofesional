@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Exportar a Excel</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body { background: #16a085; min-height: 100vh; }
+        .export-container { max-width: 900px; margin: 30px auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
+        .export-card { background: #ecf0f1; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 5px solid #16a085; }
+        .export-card h3 { margin-top: 0; color: #2c3e50; }
+        .export-card p { color: #7f8c8d; margin-bottom: 15px; }
+        .btn-export { background: #27ae60; color: white; border: none; padding: 15px 30px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; }
+        .btn-export:hover { background: #2ecc71; }
+        .btn-export:active { transform: scale(0.98); }
+        .stats-box { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
+        .stat-item { background: #3498db; color: white; padding: 15px; border-radius: 8px; text-align: center; }
+        .stat-item h4 { margin: 0 0 10px 0; font-size: 14px; opacity: 0.9; }
+        .stat-item p { margin: 0; font-size: 28px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="export-container">
+        <h2 style="color:#2c3e50; text-align:center; margin-top:0;">📊 EXPORTAR DATOS A EXCEL</h2>
+        
+        <div class="stats-box">
+            <div class="stat-item" style="background:#3498db;">
+                <h4>📦 Total Productos</h4>
+                <p id="statProductos">0</p>
+            </div>
+            <div class="stat-item" style="background:#9b59b6;">
+                <h4>📋 Movimientos</h4>
+                <p id="statMovimientos">0</p>
+            </div>
+            <div class="stat-item" style="background:#e74c3c;">
+                <h4>⚠️ Stock Bajo</h4>
+                <p id="statBajoStock">0</p>
+            </div>
+        </div>
+
+        <div class="export-card">
+            <h3>📦 Exportar Inventario Completo</h3>
+            <p>Genera un archivo Excel con todos los productos registrados en el sistema, incluyendo: modelo, no. parte, nombre, cantidad, costo, ubicación y observaciones.</p>
+            <button class="btn-export" onclick="exportarInventario()">
+                📥 DESCARGAR INVENTARIO.xlsx
+            </button>
+        </div>
+
+        <div class="export-card">
+            <h3>📋 Exportar Historial de Movimientos</h3>
+            <p>Genera un archivo Excel con todos los movimientos (salidas y devoluciones) registrados, con fecha, receptor, proyecto y productos involucrados.</p>
+            <button class="btn-export" onclick="exportarMovimientos()">
+                📥 DESCARGAR MOVIMIENTOS.xlsx
+            </button>
+        </div>
+
+        <div class="export-card" style="border-left-color:#e74c3c;">
+            <h3>⚠️ Exportar Productos con Stock Bajo</h3>
+            <p>Genera un reporte de productos con menos de 3 unidades en stock para facilitar la reposición.</p>
+            <button class="btn-export" style="background:#e74c3c;" onclick="exportarStockBajo()">
+                📥 DESCARGAR STOCK_BAJO.xlsx
+            </button>
+        </div>
+
+        <button onclick="location.href='index.html'" class="btn-action" style="width:100%; margin-top:20px;">🏠 Volver al Inicio</button>
+    </div>
+
+    <script type="module">
+        import { db, checkAuth } from './config.js';
+        import { collection, getDocs, query, orderBy, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        
+        const user = checkAuth();
+        if(user.usuario !== 'admin') {
+            alert("Solo el administrador puede exportar datos");
+            window.location.href = 'index.html';
+        }
+
+        let todosProductos = [];
+        let todosMovimientos = [];
+
+        // CARGAR DATOS
+        (async () => {
+            const snapProd = await getDocs(collection(db, "productos"));
+            todosProductos = snapProd.docs.map(d => ({ id: d.id, ...d.data() }));
+            
+            const snapMov = await getDocs(query(collection(db, "movimientos"), orderBy("fecha", "desc")));
+            todosMovimientos = snapMov.docs.map(d => ({ id: d.id, ...d.data() }));
+
+            // ACTUALIZAR ESTADÍSTICAS
+            document.getElementById('statProductos').innerText = todosProductos.length;
+            document.getElementById('statMovimientos').innerText = todosMovimientos.length;
+            document.getElementById('statBajoStock').innerText = todosProductos.filter(p => (p.cantidad || 0) < 3).length;
+        })();
+
+        window.exportarInventario = () => {
+            const datos = todosProductos.map(p => ({
+                'Modelo': p.modelo || '',
+                'No. Parte': p.noParte || '',
+                'Nombre': p.nombre || '',
+                'Descripción': p.descripcion || '',
+                'Cantidad': p.cantidad || 0,
+                'Costo': p.costo || 0,
+                'Laboratorio': p.laboratorio || '',
+                'Rack': p.rack || '',
+                'Contenedor': p.contenedor || '',
+                'Lote': p.lote || '',
+                'Observaciones': p.observaciones || '',
+                'Consumible': p.consumible ? 'Sí' : 'No',
+                'Pieza': p.pieza ? 'Sí' : 'No',
+                'Herramienta': p.herramienta ? 'Sí' : 'No',
+                'Equipo': p.equipo ? 'Sí' : 'No'
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(datos);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Inventario");
+            XLSX.writeFile(wb, `Inventario_${new Date().toISOString().split('T')[0]}.xlsx`);
+        };
+
+        window.exportarMovimientos = () => {
+            const datos = [];
+            
+            todosMovimientos.forEach(mov => {
+                const fecha = mov.fecha?.toDate ? mov.fecha.toDate().toLocaleString('es-MX') : 'N/A';
+                (mov.productos || []).forEach(prod => {
+                    datos.push({
+                        'Fecha': fecha,
+                        'Tipo': mov.tipo,
+                        'Almacenista': mov.almacenista || '',
+                        'Receptor/Devuelve': mov.receptor || '',
+                        'Proyecto': mov.proyecto || '',
+                        'Modelo': prod.modelo || '',
+                        'No. Parte': prod.noParte || '',
+                        'Producto': prod.nombre || '',
+                        'Cantidad': prod.cantidad || 1
+                    });
+                });
+            });
+
+            const ws = XLSX.utils.json_to_sheet(datos);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Movimientos");
+            XLSX.writeFile(wb, `Movimientos_${new Date().toISOString().split('T')[0]}.xlsx`);
+        };
+
+        window.exportarStockBajo = () => {
+            const datos = todosProductos
+                .filter(p => (p.cantidad || 0) < 3)
+                .map(p => ({
+                    'Modelo': p.modelo || '',
+                    'No. Parte': p.noParte || '',
+                    'Nombre': p.nombre || '',
+                    'Stock Actual': p.cantidad || 0,
+                    'Laboratorio': p.laboratorio || '',
+                    'Rack': p.rack || '',
+                    'Contenedor': p.contenedor || '',
+                    'Costo': p.costo || 0,
+                    'Observaciones': p.observaciones || ''
+                }));
+
+            if(datos.length === 0) {
+                alert("✅ No hay productos con stock bajo (menos de 3 unidades)");
+                return;
+            }
+
+            const ws = XLSX.utils.json_to_sheet(datos);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Stock Bajo");
+            XLSX.writeFile(wb, `Stock_Bajo_${new Date().toISOString().split('T')[0]}.xlsx`);
+        };
+    </script>
+</body>
+</html>

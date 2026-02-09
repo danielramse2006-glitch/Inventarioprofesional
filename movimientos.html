@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Historial de Movimientos</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body { 
+            background: #9b59b6; 
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .mov-container { 
+            width: 100%;
+            max-width: 1400px; /* Aumentado de 1200px a 1400px */
+            margin: 0 auto; 
+            background: white; 
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            box-sizing: border-box;
+        }
+        .mov-card { 
+            background: #f9f9f9; 
+            border-left: 5px solid #9b59b6; 
+            padding: 20px; /* Aumentado de 15px a 20px */
+            margin-bottom: 20px; /* Aumentado de 15px a 20px */
+            border-radius: 5px; 
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .mov-card.entrada { border-left-color: #27ae60; }
+        .mov-card.salida { border-left-color: #e74c3c; }
+        .mov-card.eliminacion { border-left-color: #c0392b; }
+        .mov-card.actualizacion { border-left-color: #f39c12; }
+        .mov-card.acceso { border-left-color: #3498db; }
+        .mov-card.acceso_fallido { border-left-color: #e74c3c; }
+        .mov-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 15px; /* Aumentado de 10px a 15px */
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .mov-tipo { 
+            font-weight: bold; 
+            font-size: 16px; 
+            padding: 8px 18px; /* Aumentado el padding */
+            border-radius: 20px; 
+            color: white; 
+            display: inline-block;
+            white-space: nowrap;
+        }
+        .mov-tipo.salida { background: #e74c3c; }
+        .mov-tipo.entrada { background: #27ae60; }
+        .mov-tipo.eliminacion { background: #c0392b; }
+        .mov-tipo.actualizacion { background: #f39c12; }
+        .mov-tipo.acceso { background: #3498db; }
+        .mov-tipo.acceso_fallido { background: #e74c3c; }
+        .mov-detalles { 
+            font-size: 14px; 
+            color: #555; 
+            margin-bottom: 15px; /* Aumentado de 10px a 15px */
+            line-height: 1.6;
+        }
+        .mov-productos { 
+            background: white; 
+            padding: 15px; /* Aumentado de 10px a 15px */
+            border-radius: 5px; 
+            margin-top: 15px; /* Aumentado de 10px a 15px */
+            width: 100%;
+            box-sizing: border-box;
+            overflow-x: auto;
+        }
+        .mov-productos table { 
+            width: 100%; 
+            border-collapse: collapse;
+            min-width: 600px; /* Asegura que la tabla no se comprima demasiado */
+        }
+        .mov-productos th, .mov-productos td { 
+            border: 1px solid #ddd; 
+            padding: 10px 12px; /* Aumentado el padding */
+            text-align: left; 
+            font-size: 13px; 
+        }
+        .mov-productos th { 
+            background: #2c3e50; 
+            color: white; 
+            font-weight: 600;
+        }
+        .mov-productos td { 
+            background: #fcfcfc;
+        }
+        .filtros { 
+            display: flex; 
+            gap: 15px; /* Aumentado de 10px a 15px */
+            margin-bottom: 30px; /* Aumentado de 20px a 30px */
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .filtros input, .filtros select { 
+            padding: 12px 15px; /* Aumentado el padding */
+            border: 1px solid #ccc; 
+            border-radius: 5px; 
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        #busqueda {
+            flex: 1;
+            min-width: 250px;
+        }
+        h2 {
+            color: #2c3e50; 
+            text-align: center; 
+            margin-top: 0;
+            margin-bottom: 30px; /* Agregado margen inferior */
+            font-size: 28px; /* Aumentado ligeramente */
+        }
+        
+        /* Responsive para pantallas pequeñas */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            .mov-container {
+                padding: 20px;
+            }
+            .filtros {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .filtros input, .filtros select {
+                width: 100%;
+            }
+            .mov-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            .mov-card {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="mov-container">
+        <h2>📋 HISTORIAL DE MOVIMIENTOS</h2>
+        
+        <div class="filtros">
+            <input type="text" id="busqueda" placeholder="Buscar por proyecto, receptor o producto...">
+            <select id="filtroTipo">
+                <option value="TODOS">🔍 Todos los movimientos</option>
+                <option value="SALIDA">📤 Salidas</option>
+                <option value="ENTRADA">📥 Devoluciones</option>
+                <option value="ELIMINACIÓN">🗑️ Eliminaciones</option>
+                <option value="ACTUALIZACIÓN">🔄 Actualizaciones</option>
+                <option value="ACCESO">🔐 Accesos</option>
+                <option value="ACCESO_FALLIDO">⚠️ Intentos Fallidos</option>
+            </select>
+            <button onclick="location.href='index.html'" class="btn-action">🏠 Volver al Inicio</button>
+        </div>
+
+        <div id="movimientos-lista">
+            <p style="text-align:center; color:#999; padding: 40px 0;">Cargando historial de movimientos...</p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { db, checkAuth } from './config.js';
+        import { collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        
+        const user = checkAuth();
+        if(user.usuario !== 'admin') {
+            alert("Solo el administrador puede ver el historial");
+            window.location.href = 'index.html';
+        }
+
+        let todosMovimientos = [];
+
+        onSnapshot(query(collection(db, "movimientos"), orderBy("fecha", "desc")), (snap) => {
+            todosMovimientos = [];
+            snap.forEach(d => todosMovimientos.push({id: d.id, ...d.data()}));
+            renderMovimientos(todosMovimientos);
+        });
+
+        function renderMovimientos(lista) {
+            const container = document.getElementById('movimientos-lista');
+            if(lista.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color:#999; padding: 40px 0;">No hay movimientos registrados</p>';
+                return;
+            }
+
+            container.innerHTML = lista.map(mov => {
+                const fecha = mov.fecha?.toDate ? mov.fecha.toDate().toLocaleString('es-MX') : 'Fecha no disponible';
+                const clase = mov.tipo.toLowerCase().replace('ó', 'o').replace('_', '_');
+                
+                let icono = '📋';
+                if(mov.tipo === 'SALIDA') icono = '📤';
+                if(mov.tipo === 'ENTRADA') icono = '📥';
+                if(mov.tipo === 'ELIMINACIÓN') icono = '🗑️';
+                if(mov.tipo === 'ACTUALIZACIÓN') icono = '🔄';
+                if(mov.tipo === 'ACCESO') icono = '🔐';
+                if(mov.tipo === 'ACCESO_FALLIDO') icono = '⚠️';
+
+                // RENDERIZADO SEGÚN TIPO
+                if(mov.tipo === 'ACCESO' || mov.tipo === 'ACCESO_FALLIDO') {
+                    return `
+                        <div class="mov-card ${clase}">
+                            <div class="mov-header">
+                                <span class="mov-tipo ${clase}">${icono} ${mov.tipo.replace('_', ' ')}</span>
+                                <span style="font-size:14px; color:#666; font-weight:500;">${fecha}</span>
+                            </div>
+                            <div class="mov-detalles">
+                                <strong>Usuario:</strong> ${mov.usuario || 'N/A'} <br>
+                                <strong>Descripción:</strong> ${mov.descripcion || 'Sin descripción'}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                if(mov.tipo === 'ELIMINACIÓN') {
+                    return `
+                        <div class="mov-card ${clase}">
+                            <div class="mov-header">
+                                <span class="mov-tipo ${clase}">${icono} ELIMINACIÓN</span>
+                                <span style="font-size:14px; color:#666; font-weight:500;">${fecha}</span>
+                            </div>
+                            <div class="mov-detalles">
+                                <strong>Usuario:</strong> ${mov.usuario || 'N/A'} <br>
+                                <strong>Razón:</strong> ${mov.razon || 'Sin especificar'}
+                            </div>
+                            <div class="mov-productos">
+                                <strong>Producto Eliminado:</strong>
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Modelo</th>
+                                            <th>No. Parte</th>
+                                            <th>Nombre</th>
+                                            <th>Cantidad</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${(mov.productos || []).map(p => `
+                                            <tr>
+                                                <td>${p.modelo || '-'}</td>
+                                                <td><strong>${p.noParte || '-'}</strong></td>
+                                                <td>${p.nombre || '-'}</td>
+                                                <td style="text-align:center;">${p.cantidad || 0}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                if(mov.tipo === 'ACTUALIZACIÓN') {
+                    return `
+                        <div class="mov-card ${clase}">
+                            <div class="mov-header">
+                                <span class="mov-tipo ${clase}">${icono} ACTUALIZACIÓN</span>
+                                <span style="font-size:14px; color:#666; font-weight:500;">${fecha}</span>
+                            </div>
+                            <div class="mov-detalles">
+                                <strong>Usuario:</strong> ${mov.usuario || 'N/A'}
+                            </div>
+                            <div class="mov-productos">
+                                <strong>Producto Actualizado:</strong>
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Modelo</th>
+                                            <th>No. Parte</th>
+                                            <th>Nombre</th>
+                                            <th>Cant. Anterior</th>
+                                            <th>Cant. Nueva</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${(mov.productos || []).map(p => `
+                                            <tr>
+                                                <td>${p.modelo || '-'}</td>
+                                                <td><strong>${p.noParte || '-'}</strong></td>
+                                                <td>${p.nombre || '-'}</td>
+                                                <td style="text-align:center; color:#e74c3c;">${p.cantidadAnterior || 0}</td>
+                                                <td style="text-align:center; color:#27ae60; font-weight:bold;">${p.cantidadNueva || 0}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // SALIDA O ENTRADA (CÓDIGO ORIGINAL)
+                return `
+                    <div class="mov-card ${clase}">
+                        <div class="mov-header">
+                            <span class="mov-tipo ${clase}">${mov.tipo === 'SALIDA' ? '📤 SALIDA' : '📥 DEVOLUCIÓN'}</span>
+                            <span style="font-size:14px; color:#666; font-weight:500;">${fecha}</span>
+                        </div>
+                        <div class="mov-detalles">
+                            <strong>Almacenista:</strong> ${mov.almacenista || 'N/A'} <br>
+                            ${mov.tipo === 'SALIDA' ? `<strong>Receptor:</strong> ${mov.receptor || 'N/A'} <br>` : ''}
+                            ${mov.tipo === 'SALIDA' ? `<strong>Proyecto:</strong> ${mov.proyecto || 'N/A'}` : ''}
+                            ${mov.tipo === 'ENTRADA' ? `<strong>Devuelto por:</strong> ${mov.receptor || 'N/A'}` : ''}
+                        </div>
+                        <div class="mov-productos">
+                            <strong>Productos:</strong>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Modelo</th>
+                                        <th>No. Parte</th>
+                                        <th>Nombre</th>
+                                        <th style="text-align:center;">Cant.</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${(mov.productos || []).map(p => `
+                                        <tr>
+                                            <td>${p.modelo || '-'}</td>
+                                            <td><strong>${p.noParte || '-'}</strong></td>
+                                            <td>${p.nombre || '-'}</td>
+                                            <td style="text-align:center;">${p.cantidad || 1}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // FILTROS
+        document.getElementById('busqueda').oninput = filtrar;
+        document.getElementById('filtroTipo').onchange = filtrar;
+
+        function filtrar() {
+            const busqueda = document.getElementById('busqueda').value.toLowerCase();
+            const tipo = document.getElementById('filtroTipo').value;
+            
+            let filtrados = todosMovimientos;
+            
+            if(tipo !== 'TODOS') {
+                filtrados = filtrados.filter(m => m.tipo === tipo);
+            }
+            
+            if(busqueda) {
+                filtrados = filtrados.filter(m => {
+                    const textoCompleto = `
+                        ${m.proyecto || ''} 
+                        ${m.receptor || ''} 
+                        ${m.almacenista || ''}
+                        ${m.usuario || ''}
+                        ${(m.productos || []).map(p => `${p.nombre} ${p.noParte} ${p.modelo}`).join(' ')}
+                    `.toLowerCase();
+                    return textoCompleto.includes(busqueda);
+                });
+            }
+            
+            renderMovimientos(filtrados);
+        }
+    </script>
+</body>
+</html>

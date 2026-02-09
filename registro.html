@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8"><title>Registro - Inventario</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h2 style="text-align:center; background:#eee; padding:15px; margin:0; color:#333;">Registro de Nuevo Material</h2>
+    <form id="form-reg" class="grid-form">
+        <div class="col">
+            <label>Modelo *</label><input type="text" id="modelo" required>
+            <label>No. de Parte *</label><input type="text" id="noParte" required>
+            <label>Nombre *</label><input type="text" id="nombre" required>
+            <label>Descripción</label><textarea id="descripcion"></textarea>
+        </div>
+
+        <div class="col">
+            <label>Cantidad *</label><input type="number" id="cantidad" required min="0">
+            <label>Costo *</label><input type="number" id="costo" required min="0">
+            <label>Lote</label><input type="text" id="lote">
+            <label>Presentación</label><input type="text" id="presentacion">
+        </div>
+
+        <div class="col" style="background:#f9f9f9; padding:10px; border-radius:5px;">
+            <p style="font-weight:bold; margin-top:0;">Tipo de Material:</p>
+            <label><input type="checkbox" id="c_consumible"> Consumible</label><br>
+            <label><input type="checkbox" id="c_pieza"> Pieza</label><br>
+            <label><input type="checkbox" id="c_herramienta"> Herramienta</label><br>
+            <label><input type="checkbox" id="c_equipo"> Equipo</label>
+        </div>
+
+        <div class="col">
+            <label>Laboratorio</label><input type="text" id="lab">
+            <label>Rack</label><input type="text" id="rack">
+            <label>Contenedor</label><input type="text" id="cont">
+            <label>Observaciones</label><textarea id="obs"></textarea>
+        </div>
+
+        <div class="form-buttons">
+            <button type="submit" class="btn-action" style="background:#27ae60; color:white;">REGISTRAR MATERIAL</button>
+            <button type="button" class="btn-action" onclick="location.href='index.html'">VOLVER</button>
+        </div>
+    </form>
+
+    <script type="module">
+        import { db, checkAuth } from './config.js';
+        import { collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        checkAuth('registrar');
+
+        document.getElementById('form-reg').onsubmit = async (e) => {
+            e.preventDefault();
+            const noParte = document.getElementById('noParte').value.trim();
+            
+            // Verificación de duplicados original
+            const q = query(collection(db, "productos"), where("noParte", "==", noParte));
+            const snap = await getDocs(q);
+            if(!snap.empty) return alert("Error: Este Número de Parte ya existe.");
+
+            try {
+                await addDoc(collection(db, "productos"), {
+                    modelo: document.getElementById('modelo').value,
+                    noParte: noParte,
+                    nombre: document.getElementById('nombre').value,
+                    descripcion: document.getElementById('descripcion').value,
+                    cantidad: Number(document.getElementById('cantidad').value),
+                    costo: Number(document.getElementById('costo').value),
+                    lote: document.getElementById('lote').value,
+                    presentacion: document.getElementById('presentacion').value,
+                    // Los 7 campos nuevos
+                    consumible: document.getElementById('c_consumible').checked,
+                    pieza: document.getElementById('c_pieza').checked,
+                    herramienta: document.getElementById('c_herramienta').checked,
+                    equipo: document.getElementById('c_equipo').checked,
+                    laboratorio: document.getElementById('lab').value,
+                    rack: document.getElementById('rack').value,
+                    contenedor: document.getElementById('cont').value,
+                    observaciones: document.getElementById('obs').value,
+                    fechaRegistro: new Date()
+                });
+                alert("✓ Material registrado con éxito");
+                e.target.reset();
+            } catch(err) { alert("Error al registrar: " + err.message); }
+        };
+    </script>
+</body>
+</html>
